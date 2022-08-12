@@ -124,6 +124,8 @@ set(MOC_HEADERS
 	expressionreferencemanager.h
     tooloptionsshortcutinvoker.h
     exportxsheetpdf.h
+    custompanelmanager.h
+    custompaneleditorpopup.h
 )
 
 if(PLATFORM EQUAL 64)
@@ -188,6 +190,7 @@ set(HEADERS
     ../include/orientation.h
     ../include/saveloadqsettings.h
     xdtsio.h
+    ocaio.h
     levelcommand.h
 # Tracker file
     ObjectTracker.h
@@ -362,11 +365,14 @@ set(SOURCES
 	separatecolorsswatch.cpp
 	separatecolorspopup.cpp
     xdtsio.cpp
+    ocaio.cpp
 	xdtsimportpopup.cpp
 	expressionreferencemanager.cpp
     tooloptionsshortcutinvoker.cpp
     tvpjson_io.cpp
     exportxsheetpdf.cpp
+    custompanelmanager.cpp
+    custompaneleditorpopup.cpp
 # Tracker file
     dummyprocessor.cpp
     metnum.cpp
@@ -486,7 +492,7 @@ if(BUILD_ENV_MSVC)
     endif()
     target_link_libraries(OpenToonz
         Qt5::WinMain Qt5::Core Qt5::Gui Qt5::Network Qt5::OpenGL Qt5::Svg Qt5::Xml
-        Qt5::Script Qt5::Widgets Qt5::PrintSupport Qt5::Multimedia
+        Qt5::Script Qt5::Widgets Qt5::PrintSupport Qt5::Multimedia Qt5::UiTools
         ${GL_LIB} ${GLUT_LIB} 
         ${EXTRA_LIBS} strmiids
         tnzcore tnzbase toonzlib colorfx tnzext image sound toonzqt tnztools tnzstdfx tfarm
@@ -510,7 +516,7 @@ elseif(BUILD_ENV_APPLE)
 
     target_link_libraries(OpenToonz
         Qt5::Core Qt5::Gui Qt5::Network Qt5::OpenGL Qt5::Svg Qt5::Xml
-        Qt5::Script Qt5::Widgets Qt5::PrintSupport Qt5::Multimedia Qt5::MultimediaWidgets
+        Qt5::Script Qt5::Widgets Qt5::PrintSupport Qt5::Multimedia Qt5::MultimediaWidgets Qt5::UiTools
         ${GL_LIB} ${GLUT_LIB}
         ${COCOA_LIB} ${EXTRA_LIBS} ${X64ONLY_LIBS} mousedragfilter
     )
@@ -532,7 +538,7 @@ elseif(BUILD_ENV_UNIXLIKE)
 
     target_link_libraries(
         OpenToonz Qt5::Core Qt5::Gui Qt5::Network Qt5::OpenGL Qt5::Svg Qt5::Xml
-        Qt5::Script Qt5::Widgets Qt5::PrintSupport Qt5::Multimedia
+        Qt5::Script Qt5::Widgets Qt5::PrintSupport Qt5::Multimedia Qt5::UiTools
         ${GL_LIB} ${GLUT_LIB} ${GLU_LIB}
         ${EXTRA_LIBS}
     )

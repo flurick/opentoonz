@@ -454,6 +454,7 @@
 #define MI_FlipPrevGuideStroke "MI_FlipPrevGuideStroke"
 
 #define MI_ExportXDTS "MI_ExportXDTS"
+#define MI_ExportOCA "MI_ExportOCA"
 #define MI_ExportTvpJson "MI_ExportTvpJson"
 #define MI_ExportXsheetPDF "MI_ExportXsheetPDF"
 
@@ -462,5 +463,8 @@
 
 #define MI_ZoomInAndFitPanel "MI_ZoomInAndFitPanel"
 #define MI_ZoomOutAndFitPanel "MI_ZoomOutAndFitPanel"
+
+#define MI_OpenCustomPanels "MI_OpenCustomPanels"
+#define MI_CustomPanelEditor "MI_CustomPanelEditor"
 
 #endif

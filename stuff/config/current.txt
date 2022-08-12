@@ -821,6 +821,8 @@
   <item>"STD_particlesFx.source_gradation"		"Use Control Image Gradation"		</item>
   <item>"STD_particlesFx.pick_color_for_every_frame"	"Pick Control Image's Color for Every Frame"	</item>
   <item>"STD_particlesFx.perspective_distribution"	"Perspective Distribution"	</item>
+  <item>"STD_particlesFx.motion_blur"	"Motion Blur"	</item>
+  <item>"STD_particlesFx.motion_blur_gamma"	"Gamma"	</item>
 
   
  <!------------------------------ Function Editor ------------------------------------------->
@@ -1203,6 +1205,7 @@
   <item>"STD_iwa_GradientWarpFx.h_maxlen"		"H Length"</item>
   <item>"STD_iwa_GradientWarpFx.v_maxlen"		"V Length"</item>
   <item>"STD_iwa_GradientWarpFx.scale"			"Scale"</item>
+  <item>"STD_iwa_GradientWarpFx.sampling_size"			"Sampling Size"</item>
 
   <item>"STD_iwa_MotionBlurCompFx"	"Motion Blur Iwa"	</item>
   <item>"STD_iwa_MotionBlurCompFx.hardness"	"Hardness"	</item>
