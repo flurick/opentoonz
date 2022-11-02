@@ -74,6 +74,8 @@ extern QString updateToolEnableStatus(TTool *tool);
 namespace {
 //-----------------------------------------------------------------------------
 
+QHash<int, bool> currentlyPressedKeys;
+
 void initToonzEvent(TMouseEvent &toonzEvent, QMouseEvent *event,
                     int widgetHeight, double pressure, int devPixRatio) {
   toonzEvent.m_pos      = TPointD(event->pos().x() * devPixRatio,
@@ -585,7 +587,7 @@ void SceneViewer::onMove(const TMouseEvent &event) {
     }
 
     // if the middle mouse button is pressed while dragging, then do panning
-    if (event.buttons() & Qt::MidButton) {
+    if (event.buttons() & Qt::MidButton || currentlyPressedKeys[Qt::Key_Space]) {
       // panning
       QPointF p = curPos - m_pos;
       if (m_pos == QPointF() && p.manhattanLength() > 300) return;
@@ -1385,6 +1387,8 @@ void SceneViewer::keyPressEvent(QKeyEvent *event) {
   if (m_freezedStatus != NO_FREEZED) return;
   int key = event->key();
 
+  currentlyPressedKeys.insert(key, true);
+
 #ifdef WITH_CANON
   if ((m_stopMotion->m_canon->m_pickLiveViewZoom ||
        m_stopMotion->m_canon->m_zooming) &&
@@ -1564,6 +1568,8 @@ void SceneViewer::keyReleaseEvent(QKeyEvent *event) {
   tool->setViewer(this);
 
   int key = event->key();
+  
+  currentlyPressedKeys.insert(key, false);
 
   if (key == Qt::Key_Shift || key == Qt::Key_Control || key == Qt::Key_Alt ||
       key == Qt::Key_AltGr) {
