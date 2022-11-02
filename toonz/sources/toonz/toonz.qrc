@@ -215,7 +215,8 @@
 		<file>icons/dark/actions/16/nextstep.svg</file>
 		<file>icons/dark/actions/16/prevstep.svg</file>
 		<file>icons/dark/actions/16/nextkey.svg</file>
-		<file>icons/dark/actions/16/prevkey.svg</file>
+    <file>icons/dark/actions/16/prevkey.svg</file>
+    <file>icons/dark/actions/16/blankframes.svg</file>
 
 		<file>icons/dark/actions/16/snapshot.svg</file>
 		<file>icons/dark/actions/16/compare.svg</file>
@@ -448,6 +449,8 @@
 		<file>icons/dark/actions/16/palette_tab.svg</file>
 		<file>icons/dark/actions/20/dragpalette.svg</file>
 		<file>icons/dark/actions/16/palettegizmo.svg</file>
+		<file>icons/dark/actions/16/new_style.svg</file>
+		<file>icons/dark/actions/16/new_page.svg</file>
 
 		<!-- Titlebars -->
 		<file>icons/dark/actions/20/pane_table.svg</file>
@@ -486,6 +489,8 @@
 		<file>icons/dark/actions/16/console.svg</file>
 		<file>icons/dark/actions/16/pickscreen.svg</file>
 		<file>icons/dark/actions/16/toggle_fullscreen.svg</file>
+		<file>icons/dark/actions/16/toggle_seethroughwin_on.svg</file>
+		<file>icons/dark/actions/16/toggle_seethroughwin_off.svg</file>
 		<file>icons/dark/actions/16/schematic.svg</file>
 		<file>icons/dark/actions/16/viewer.svg</file>
 		<file>icons/dark/actions/16/comboviewer.svg</file>
@@ -583,6 +588,7 @@
 		<file>Resources/no_specialstyle.png</file>
 		<file>Resources/no_vectorbrush.png</file>
 		<file>Resources/no_mypaintbrush.png</file>
+		<file>Resources/no_texturestyle.png</file>
 		<file>Resources/palette_header.svg</file>
 		<file>Resources/paletteicon.svg</file>
 		<file>Resources/pan.png</file>

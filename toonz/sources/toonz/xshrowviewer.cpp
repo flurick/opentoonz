@@ -133,6 +133,10 @@ void RowArea::drawRows(QPainter &p, int r0, int r1) {
   bool simpleView = m_viewer->getFrameZoomFactor() <=
                     o->dimension(PredefinedDimension::SCALE_THRESHOLD);
 
+  int currentRow = m_viewer->getCurrentRow();
+  bool hasCurrentFrameTextColor =
+      m_viewer->getTextColor() != m_viewer->getCurrentFrameTextColor();
+
   for (int r = r0; r <= r1; r++) {
     int frameAxis = m_viewer->rowToFrameAxis(r);
 
@@ -142,12 +146,15 @@ void RowArea::drawRows(QPainter &p, int r0, int r1) {
     bool isAfterSecMarkers =
         secDistance > 0 && ((r - offset) % secDistance) == 0 && r != 0;
 
-    QColor color = (isAfterSecMarkers || isAfterMarkers)
-                       ? m_viewer->getMarkerLineColor()
-                       : m_viewer->getLightLineColor();
+    QColor color = (isAfterSecMarkers)
+                       ? m_viewer->getSecMarkerLineColor()
+                       : (isAfterMarkers) ? m_viewer->getMarkerLineColor()
+                                          : m_viewer->getLightLineColor();
+    double lineWidth = (isAfterSecMarkers)
+                           ? 3.
+                           : (secDistance > 0 && isAfterMarkers) ? 2. : 1.;
 
-    p.setPen(
-        QPen(color, (isAfterSecMarkers) ? 3. : 1., Qt::SolidLine, Qt::FlatCap));
+    p.setPen(QPen(color, lineWidth, Qt::SolidLine, Qt::FlatCap));
     // p.setPen(color);
     QLine horizontalLine = o->horizontalLine(frameAxis, layerSide);
     if (!o->isVerticalTimeline()) {
@@ -170,7 +177,9 @@ void RowArea::drawRows(QPainter &p, int r0, int r1) {
   int z = 0;
   for (int r = r0; r <= r1; r++) {
     // draw frame text
-    if (playR0 <= r && r <= playR1) {
+    if (hasCurrentFrameTextColor && r == currentRow)
+      p.setPen(m_viewer->getCurrentFrameTextColor());
+    else if (playR0 <= r && r <= playR1) {
       p.setPen(((r - m_r0) % step == 0) ? m_viewer->getPreviewFrameTextColor()
                                         : m_viewer->getTextColor());
     }
@@ -679,8 +688,9 @@ void RowArea::drawCurrentTimeIndicator(QPainter &p) {
 }
 
 void RowArea::drawCurrentTimeLine(QPainter &p) {
-  QPoint frameAdj = m_viewer->getFrameZoomAdjustment();
-  int currentRow  = m_viewer->getCurrentRow();
+  QPoint frameAdj       = m_viewer->getFrameZoomAdjustment();
+  int currentRow        = m_viewer->getCurrentRow();
+  QColor indicatorColor = m_viewer->getCurrentTimeIndicatorColor();
 
   QPoint topLeft = m_viewer->positionToXY(CellPosition(currentRow, -1));
   if (!m_viewer->orientation()->isVerticalTimeline())
@@ -689,15 +699,22 @@ void RowArea::drawCurrentTimeLine(QPainter &p) {
     topLeft.setX(0);
   QRect header = m_viewer->orientation()
                      ->rect(PredefinedRect::FRAME_HEADER)
-                     .translated(topLeft)
-                     .translated(-frameAdj / 2);
+                     .translated(topLeft);
 
-  int frameMid    = header.left() + (header.width() / 2) - 1;
-  int frameTop    = header.top();
-  int frameBottom = header.bottom();
+  if (m_viewer->orientation()->isVerticalTimeline()) {
+    header.adjust(1, 1, -frameAdj.x(), -frameAdj.y());
+    p.setPen(
+        QPen(indicatorColor, 1, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
+    p.drawRect(header.adjusted(0, 0, -1, -1));
+  } else {
+    header.translate(-frameAdj / 2);
+    int frameMid    = header.left() + (header.width() / 2) - 1;
+    int frameTop    = header.top();
+    int frameBottom = header.bottom();
 
-  p.setPen(Qt::red);
-  p.drawLine(frameMid, frameTop + 23, frameMid, frameBottom);
+    p.setPen(indicatorColor);
+    p.drawLine(frameMid, frameTop + 23, frameMid, frameBottom);
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -712,8 +729,8 @@ void RowArea::drawShiftTraceMarker(QPainter &p) {
 
   QPoint frameAdj = m_viewer->getFrameZoomAdjustment();
   int frameAdj_i  = (m_viewer->orientation()->isVerticalTimeline())
-                        ? frameAdj.y()
-                        : frameAdj.x();
+                       ? frameAdj.y()
+                       : frameAdj.x();
 
   // get onion colors
   TPixel frontPixel, backPixel;
@@ -926,9 +943,10 @@ void RowArea::paintEvent(QPaintEvent *event) {
   }
 #endif
 
+  // For now, the current frame indicator is not displayed in the xsheet row
+  // area
   if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-      Preferences::instance()->isCurrentTimelineIndicatorEnabled() &&
-      !m_viewer->orientation()->isVerticalTimeline())
+      Preferences::instance()->isCurrentTimelineIndicatorEnabled())
     drawCurrentTimeLine(p);
 
   drawRows(p, r0, r1);
@@ -938,6 +956,8 @@ void RowArea::paintEvent(QPaintEvent *event) {
       drawShiftTraceMarker(p);
     else if (Preferences::instance()->isOnionSkinEnabled())
       drawOnionSkinSelection(p);
+    // For now, the current frame indicator is not displayed in the xsheet row
+    // area
     else if (Preferences::instance()->isCurrentTimelineIndicatorEnabled() &&
              !m_viewer->orientation()->isVerticalTimeline())
       drawCurrentTimeIndicator(p);

@@ -119,6 +119,13 @@
 @palette-CurrentCellColor: fade(@hl-bg-color, 50);
 @palette-ListNumpadShortcutBorderColor: rgb(175, 175, 175);
 
+// StyleChooserPage Chips
+@palette-CommonChipBoxColor:    black;
+@palette-PinnedChipBoxColor:    rgb(160, 160, 160);
+@palette-SolidChipBoxColor:     rgb(228, 16, 0);
+@palette-SelectedChipBoxColor:  white;
+@palette-SelectedChipBox2Color: rgb(199, 202, 50);
+
 // -----------------------------------------------------------------------------
 // Button
 // -----------------------------------------------------------------------------
@@ -391,10 +398,14 @@
 // XSheet Spreadsheet Viewer
 @xsheet-text-color:                         @text-color;
 @xsheet-error-text-color:                   rgb(255, 123, 123);
+@xsheet-selected-text-color:                @text-color;
+@xsheet-currentFrame-text-color:            @text-color;
 @xsheet-bg-color:                           darken(@bg, 3);
 @xsheet-empty-bg-color:                     @bg;
 @xsheet-LightLine-color:                    rgba(0, 0, 0, 0.2);
 @xsheet-MarkerLine-color:                   rgba(255, 255, 255, 0.15);
+@xsheet-SecMarkerLine-color:                rgba(255, 255, 255, 0.25);
+@xsheet-SelectedMarkerLine-color:           @xsheet-MarkerLine-color;
 @xsheet-VerticalLine-color:                 rgba(0, 0, 0, 0.3);
 @xsheet-VerticalLineHead-color:             darken(@bg, 13);
 @xsheet-PreviewFrameText-color:             @label-title;
@@ -414,6 +425,7 @@
 
 @xsheet-FoldedColumnBG-color:               lighten(@bg, 10);
 @xsheet-FoldedColumnLine-color:             darken(@bg, 5);
+@xsheet-CurrentTimeIndicator-color:         rgb(255, 0, 0);
 
 // Level Type Colors Adjustment
 @columnBorderDesaturation:                  0;

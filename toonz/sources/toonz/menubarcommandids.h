@@ -54,7 +54,7 @@
 #define MI_ClonePreview "MI_ClonePreview"
 #define MI_FreezePreview "MI_FrezzePreview"
 #define MI_SavePreviewedFrames "MI_SavePreviewedFrames"
-//#define MI_SavePreview         "MI_SavePreview"
+// #define MI_SavePreview         "MI_SavePreview"
 #define MI_Print "MI_Print"
 #define MI_Preferences "MI_Preferences"
 #define MI_SavePreset "MI_SavePreset"
@@ -83,7 +83,7 @@
 #define MI_CanvasSize "MI_CanvasSize"
 #define MI_RemoveUnused "MI_RemoveUnused"
 
-//#define MI_OpenCurrentScene  "MI_OpenCurrentScene"
+// #define MI_OpenCurrentScene  "MI_OpenCurrentScene"
 #define MI_OpenFileBrowser "MI_OpenFileBrowser"
 #define MI_OpenFileViewer "MI_OpenFileViewer"
 #define MI_OpenFilmStrip "MI_OpenFilmStrip"
@@ -96,7 +96,7 @@
 #define MI_OpenToolOptionBar "MI_OpenToolOptionBar"
 #define MI_OpenLevelView "MI_OpenLevelView"
 #define MI_OpenStopMotionPanel "MI_OpenStopMotionPanel"
-//#define MI_OpenExport "MI_OpenExport"
+// #define MI_OpenExport "MI_OpenExport"
 #define MI_BrightnessAndContrast "MI_BrightnessAndContrast"
 #define MI_Antialias "MI_Antialias"
 #define MI_AdjustLevels "MI_AdjustLevels"
@@ -190,6 +190,7 @@
 #define MI_NoShift "MI_NoShift"
 #define MI_ResetShift "MI_ResetShift"
 #define MI_Histogram "MI_Histogram"
+#define MI_ViewerHistogram "MI_ViewerHistogram"
 #define MI_FxParamEditor "MI_FxParamEditor"
 
 #define MI_Link "MI_Link"
@@ -207,6 +208,7 @@
 #define MI_PrevStep "MI_PrevStep"
 #define MI_NextKeyframe "MI_NextKeyframe"
 #define MI_PrevKeyframe "MI_PrevKeyframe"
+#define MI_ToggleBlankFrames "MI_ToggleBlankFrames"
 
 #define MI_RedChannel "MI_RedChannel"
 #define MI_GreenChannel "MI_GreenChannel"
@@ -231,11 +233,12 @@
 #define MI_ResetRoomLayout "MI_ResetRoomLayout"
 #define MI_MaximizePanel "MI_MaximizePanel"
 #define MI_FullScreenWindow "MI_FullScreenWindow"
+#define MI_SeeThroughWindow "MI_SeeThroughWindow"
 #define MI_OnionSkin "MI_OnionSkin"
 #define MI_ZeroThick "MI_ZeroThick"
 #define MI_CursorOutline "MI_CursorOutline"
 
-//#define MI_LoadResourceFile       "MI_LoadResourceFile"
+// #define MI_LoadResourceFile       "MI_LoadResourceFile"
 #define MI_DuplicateFile "MI_DuplicateFile"
 #define MI_ViewFile "MI_ViewFile"
 #define MI_ConvertFiles "MI_ConvertFiles"
@@ -467,4 +470,5 @@
 #define MI_OpenCustomPanels "MI_OpenCustomPanels"
 #define MI_CustomPanelEditor "MI_CustomPanelEditor"
 
+#define MI_ConvertTZPInFolder "MI_ConvertTZPInFolder"
 #endif

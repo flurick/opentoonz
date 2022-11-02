@@ -29,6 +29,7 @@ set(MOC_HEADERS
     commandbar.h
     commandbarpopup.h
     convertpopup.h
+    crashhandler.h
     duplicatepopup.h
     dvdirtreeview.h
     dvitemview.h
@@ -126,6 +127,7 @@ set(MOC_HEADERS
     exportxsheetpdf.h
     custompanelmanager.h
     custompaneleditorpopup.h
+    convertfolderpopup.h
 )
 
 if(PLATFORM EQUAL 64)
@@ -258,6 +260,7 @@ set(SOURCES
     addfilmstripframespopup.cpp
     camerasettingspopup.cpp
     convertpopup.cpp
+    crashhandler.cpp
     duplicatepopup.cpp
     dvdirtreeview.cpp
     filebrowserpopup.cpp
@@ -373,6 +376,7 @@ set(SOURCES
     exportxsheetpdf.cpp
     custompanelmanager.cpp
     custompaneleditorpopup.cpp
+    convertfolderpopup.cpp
 # Tracker file
     dummyprocessor.cpp
     metnum.cpp

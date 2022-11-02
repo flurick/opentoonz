@@ -26,6 +26,7 @@
 #include "toonzqt/viewcommandids.h"
 #include "toonzqt/updatechecker.h"
 #include "toonzqt/paletteviewer.h"
+#include "toonzqt/seethroughwindow.h"
 
 // TnzLib includes
 #include "toonz/toonzfolders.h"
@@ -452,6 +453,7 @@ centralWidget->setLayout(centralWidgetLayout);*/
 
   setCommandHandler(MI_MaximizePanel, this, &MainWindow::maximizePanel);
   setCommandHandler(MI_FullScreenWindow, this, &MainWindow::fullScreenWindow);
+  setCommandHandler(MI_SeeThroughWindow, this, &MainWindow::seeThroughWindow);
   setCommandHandler("MI_NewVectorLevel", this,
                     &MainWindow::onNewVectorLevelButtonPressed);
   setCommandHandler("MI_NewToonzRasterLevel", this,
@@ -1076,17 +1078,25 @@ void MainWindow::maximizePanel() {
 }
 
 void MainWindow::fullScreenWindow() {
-  if (isFullScreen())
-    showNormal();
-  else {
+  if (isFullScreen()) {
+    if (m_wasMaximized)
+      showMaximized();
+    else
+      showNormal();
+  } else {
 #if defined(_WIN32)
     // http://doc.qt.io/qt-5/windows-issues.html#fullscreen-opengl-based-windows
     this->winId();
     QWindowsWindowFunctions::setHasBorderInFullScreen(this->windowHandle(),
                                                       true);
 #endif
+    m_wasMaximized = isMaximized();
     this->showFullScreen();
   }
+}
+
+void MainWindow::seeThroughWindow() {
+  SeeThroughWindowMode::instance()->toggleMode(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -1652,6 +1662,8 @@ void MainWindow::defineActions() {
                        QT_TR_NOOP("&Clear Recent level File List"), "");
   createMenuFileAction(MI_ConvertFileWithInput, QT_TR_NOOP("&Convert File..."),
                        "", "convert");
+  createMenuFileAction(MI_ConvertTZPInFolder,
+                       QT_TR_NOOP("&Convert TZP Files In Folder..."), "");
   createMenuFileAction(MI_LoadColorModel, QT_TR_NOOP("&Load Color Model..."),
                        "", "load_colormodel");
   createMenuFileAction(MI_ImportMagpieFile,
@@ -1992,6 +2004,8 @@ void MainWindow::defineActions() {
                        "nextkey");
   createMenuPlayAction(MI_PrevKeyframe, QT_TR_NOOP("Previous Key"), "Ctrl+,",
                        "prevkey");
+  createMenuPlayAction(MI_ToggleBlankFrames, QT_TR_NOOP("Toggle Blank Frames"),
+                       "", "blankframes");
 
   // Menu - Render
 
@@ -2136,6 +2150,9 @@ void MainWindow::defineActions() {
   createMenuWindowsAction(MI_FullScreenWindow,
                           QT_TR_NOOP("Toggle Main Window's Full Screen Mode"),
                           "Ctrl+`", "toggle_fullscreen");
+  createMenuWindowsAction(MI_SeeThroughWindow,
+                          QT_TR_NOOP("Toggle Main Window's See Through Mode"),
+                          "Alt+`", "toggle_seethroughwin_on");
   createMenuHelpAction(MI_About, QT_TR_NOOP("&About OpenToonz..."), "", "info");
   createMenuWindowsAction(MI_StartupPopup, QT_TR_NOOP("&Startup Popup..."),
                           "Alt+S", "opentoonz");
@@ -2215,7 +2232,13 @@ void MainWindow::defineActions() {
                              "", "shift_keys_up");
   createRightClickMenuAction(MI_PasteNumbers, QT_TR_NOOP("&Paste Numbers"), "",
                              "paste_numbers");
+
   createRightClickMenuAction(MI_Histogram, QT_TR_NOOP("&Histogram"), "");
+  // MI_ViewerHistogram command is used as a proxy. It will be called when
+  // the MI_Histogram is used while the current flip console is in viewer.
+  createAction(MI_ViewerHistogram, QT_TR_NOOP("&Viewer Histogram"), "",
+               HiddenCommandType);
+
   createRightClickMenuAction(MI_BlendColors, QT_TR_NOOP("&Blend colors"), "");
   createToggle(MI_OnionSkin, QT_TR_NOOP("Onion Skin Toggle"), "/", false,
                RightClickMenuCommandType, "onionskin_toggle");

@@ -1187,10 +1187,17 @@ void CellArea::drawFrameSeparator(QPainter &p, int row, int col,
   bool isAfterSecMarkers =
       secDistance > 0 && ((row - offset) % secDistance) == 0 && row != 0;
 
+  TCellSelection *cellSelection = m_viewer->getCellSelection();
+  bool isSelected               = cellSelection->isCellSelected(row, col);
+
   QColor color = (isAfterMarkers || isAfterSecMarkers)
-                     ? m_viewer->getMarkerLineColor()
+                     ? (isSelected) ? m_viewer->getSelectedMarkerLineColor()
+                                    : (isAfterSecMarkers)
+                                          ? m_viewer->getSecMarkerLineColor()
+                                          : m_viewer->getMarkerLineColor()
                      : m_viewer->getLightLineColor();
-  double lineWidth = (isAfterSecMarkers) ? 3. : 1.;
+  double lineWidth =
+      (isAfterSecMarkers) ? 3. : (secDistance > 0 && isAfterMarkers) ? 2. : 1.;
 
   int frameAxis = m_viewer->rowToFrameAxis(row);
   int handleSize =
@@ -1265,7 +1272,6 @@ void CellArea::drawCells(QPainter &p, const QRect toBeUpdated) {
       drawFoldedColumns(p, layerAxis, frameSide);
 
       if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-          !m_viewer->orientation()->isVerticalTimeline() &&
           Preferences::instance()->isCurrentTimelineIndicatorEnabled()) {
         row       = m_viewer->getCurrentRow();
         QPoint xy = m_viewer->positionToXY(CellPosition(row, col));
@@ -1314,7 +1320,6 @@ void CellArea::drawCells(QPainter &p, const QRect toBeUpdated) {
         if (col >= 0 && !isColumn) {
           drawFrameSeparator(p, row, col, true);
           if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-              !m_viewer->orientation()->isVerticalTimeline() &&
               row == m_viewer->getCurrentRow() &&
               Preferences::instance()->isCurrentTimelineIndicatorEnabled()) {
             QPoint xy = m_viewer->positionToXY(CellPosition(row, col));
@@ -1326,7 +1331,7 @@ void CellArea::drawCells(QPainter &p, const QRect toBeUpdated) {
               else
                 xy.setX(xy.x() + 1);
             }
-            drawCurrentTimeIndicator(p, xy);
+            drawCurrentTimeIndicator(p, xy, col);
           }
           continue;
         }
@@ -1558,10 +1563,9 @@ void CellArea::drawSoundCell(QPainter &p, int row, int col, bool isReference) {
       row < startFrame) {
     drawFrameSeparator(p, row, col, true);
     if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-        !m_viewer->orientation()->isVerticalTimeline() &&
         row == m_viewer->getCurrentRow() &&
         Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-      drawCurrentTimeIndicator(p, xy);
+      drawCurrentTimeIndicator(p, xy, col);
     return;
   }
 
@@ -1608,10 +1612,9 @@ void CellArea::drawSoundCell(QPainter &p, int row, int col, bool isReference) {
     p.fillRect(rect, QBrush(cellColor));
 
   if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-      !m_viewer->orientation()->isVerticalTimeline() &&
       row == m_viewer->getCurrentRow() &&
       Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-    drawCurrentTimeIndicator(p, xy);
+    drawCurrentTimeIndicator(p, xy, col);
 
   drawDragHandle(p, xy, sideColor);
   drawEndOfDragHandle(p, isLastRow, xy, cellColor);
@@ -1749,26 +1752,39 @@ void CellArea::drawLockedDottedLine(QPainter &p, bool isLocked,
   p.drawLine(dottedLine);
 }
 
-void CellArea::drawCurrentTimeIndicator(QPainter &p, const QPoint &xy,
+void CellArea::drawCurrentTimeIndicator(QPainter &p, const QPoint &xy, int col,
                                         bool isFolded) {
-  QPoint frameAdj = m_viewer->getFrameZoomAdjustment();
-  QRect cell      = m_viewer->orientation()
-                   ->rect(PredefinedRect::CELL)
-                   .translated(xy)
-                   .translated(-frameAdj / 2);
+  QPoint frameAdj       = m_viewer->getFrameZoomAdjustment();
+  QColor indicatorColor = m_viewer->getCurrentTimeIndicatorColor();
+  if (!m_viewer->orientation()->isVerticalTimeline()) {
+    QLine line = m_viewer->orientation()
+                     ->line(PredefinedLine::CURRENT_TIME_INDICATOR)
+                     .translated(xy)
+                     .translated(-frameAdj / 2);
+    // Adjust for 1st row
+    if (xy.x() <= 1) line.translate(-1, 0);
+    if (isFolded)
+      line.setP2(line.p1() +
+                 QPoint(0, m_viewer->orientation()->foldedCellSize() - 1));
+    p.setPen(indicatorColor);
+    p.drawLine(line);
+  } else {
+    QRect cellRect = m_viewer->orientation()
+                         ->rect((col < 0) ? PredefinedRect::CAMERA_CELL
+                                          : PredefinedRect::CELL)
+                         .translated(xy)
+                         .adjusted(1, 1, -frameAdj.x(), -frameAdj.y());
+    // Adjust for 1st row
+    if (xy.y() <= 1) cellRect.adjust(0, -1, 0, -1);
+    if (isFolded)
+      cellRect.setRight(cellRect.left() +
+                        m_viewer->orientation()->foldedCellSize() - 1);
 
-  int cellMid    = cell.left() + (cell.width() / 2) - 1;
-  int cellTop    = cell.top();
-  int cellBottom = cell.bottom();
-
-  // Adjust left for 1st row
-  if (xy.x() <= 1) cellMid -= 1;
-
-  if (isFolded)
-    cellBottom = cell.top() + m_viewer->orientation()->foldedCellSize() - 1;
-
-  p.setPen(Qt::red);
-  p.drawLine(cellMid, cellTop, cellMid, cellBottom);
+    p.setPen(
+        QPen(indicatorColor, 1, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
+    p.drawLine(cellRect.topLeft(), cellRect.topRight());
+    p.drawLine(cellRect.bottomLeft(), cellRect.bottomRight());
+  }
 }
 
 void CellArea::drawFrameMarker(QPainter &p, const QPoint &xy, QColor color,
@@ -1805,6 +1821,25 @@ void CellArea::drawFrameMarker(QPainter &p, const QPoint &xy, QColor color,
     p.drawEllipse(dotRect);
     p.setBrush(Qt::NoBrush);
   }
+}
+
+//-----------------------------------------------------------------------------
+
+void CellArea::drawFocusCellBorder(QPainter &p) {
+  QColor color = m_viewer->getCellFocusColor();
+  if (color.alpha() == 0) return;
+  QPoint frameAdj = m_viewer->getFrameZoomAdjustment();
+  int row         = m_viewer->getCurrentRow();
+  int col         = m_viewer->getCurrentColumn();
+  QPoint xy       = m_viewer->positionToXY(CellPosition(row, col));
+  QRect rect =
+      m_viewer->orientation()
+          ->rect((col < 0) ? PredefinedRect::CAMERA_CELL : PredefinedRect::CELL)
+          .translated(xy)
+          .adjusted(1, 1, -1 - frameAdj.x(), -frameAdj.y());
+  p.setPen(QPen(color, 2, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
+  p.setBrush(Qt::NoBrush);
+  p.drawRect(rect);
 }
 
 //-----------------------------------------------------------------------------
@@ -1909,10 +1944,9 @@ void CellArea::drawLevelCell(QPainter &p, int row, int col, bool isReference,
     drawFrameSeparator(p, row, col, true);
 
     if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-        !m_viewer->orientation()->isVerticalTimeline() &&
         row == m_viewer->getCurrentRow() &&
         Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-      drawCurrentTimeIndicator(p, xy);
+      drawCurrentTimeIndicator(p, xy, col);
     return;
   }
 
@@ -1937,10 +1971,9 @@ void CellArea::drawLevelCell(QPainter &p, int row, int col, bool isReference,
     p.drawLine(rect.topRight(), rect.bottomLeft());
 
     if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-        !m_viewer->orientation()->isVerticalTimeline() &&
         row == m_viewer->getCurrentRow() &&
         Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-      drawCurrentTimeIndicator(p, xy);
+      drawCurrentTimeIndicator(p, xy, col);
 
     return;
   }
@@ -1986,10 +2019,9 @@ void CellArea::drawLevelCell(QPainter &p, int row, int col, bool isReference,
   }
 
   if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-      !m_viewer->orientation()->isVerticalTimeline() &&
       row == m_viewer->getCurrentRow() &&
       Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-    drawCurrentTimeIndicator(p, xy);
+    drawCurrentTimeIndicator(p, xy, col);
 
   drawDragHandle(p, xy, sideColor);
 
@@ -2020,10 +2052,12 @@ void CellArea::drawLevelCell(QPainter &p, int row, int col, bool isReference,
   TXshChildLevel *cl = cell.getChildLevel();
   if (cl && cell.getFrameId().getNumber() - 1 >= cl->getFrameCount())
     isRed = true;
-  QColor penColor =
-      isRed ? QColor(m_viewer->getErrorTextColor()) : m_viewer->getTextColor();
+  QColor penColor = isRed ? QColor(m_viewer->getErrorTextColor())
+                          : isSelected ? m_viewer->getSelectedTextColor()
+                                       : m_viewer->getTextColor();
   p.setPen(penColor);
 
+  /*
   QString fontName = Preferences::instance()->getInterfaceFont();
   if (fontName == "") {
 #ifdef _WIN32
@@ -2033,6 +2067,8 @@ void CellArea::drawLevelCell(QPainter &p, int row, int col, bool isReference,
 #endif
   }
   static QFont font(fontName, -1, QFont::Normal);
+  */
+  QFont font = p.font();
   font.setPixelSize(XSHEET_FONT_PX_SIZE);
   p.setFont(font);
 
@@ -2197,10 +2233,9 @@ void CellArea::drawSoundTextCell(QPainter &p, int row, int col) {
   if (cell.isEmpty() && prevCell.isEmpty()) {
     drawFrameSeparator(p, row, col, true);
     if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-        !m_viewer->orientation()->isVerticalTimeline() &&
         row == m_viewer->getCurrentRow() &&
         Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-      drawCurrentTimeIndicator(p, xy);
+      drawCurrentTimeIndicator(p, xy, col);
 
     // only draw mark
     if (markId >= 0) {
@@ -2231,10 +2266,9 @@ void CellArea::drawSoundTextCell(QPainter &p, int row, int col) {
       p.drawEllipse(markRect);
     }
     if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-        !m_viewer->orientation()->isVerticalTimeline() &&
         row == m_viewer->getCurrentRow() &&
         Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-      drawCurrentTimeIndicator(p, xy);
+      drawCurrentTimeIndicator(p, xy, col);
 
     return;
   }
@@ -2254,10 +2288,9 @@ void CellArea::drawSoundTextCell(QPainter &p, int row, int col) {
     p.fillRect(rect, QBrush(cellColor));
 
   if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-      !m_viewer->orientation()->isVerticalTimeline() &&
       row == m_viewer->getCurrentRow() &&
       Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-    drawCurrentTimeIndicator(p, xy);
+    drawCurrentTimeIndicator(p, xy, col);
 
   drawDragHandle(p, xy, sideColor);
 
@@ -2436,10 +2469,9 @@ void CellArea::drawSoundTextColumn(QPainter &p, int r0, int r1, int col) {
         p.drawLine(info.rect.topRight(), info.rect.bottomLeft());
       }
       if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-          !m_viewer->orientation()->isVerticalTimeline() &&
           row == m_viewer->getCurrentRow() &&
           Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-        drawCurrentTimeIndicator(p, info.xy);
+        drawCurrentTimeIndicator(p, info.xy, col);
       // draw mark
       if (info.markId >= 0) {
         p.setBrush(info.markColor);
@@ -2472,9 +2504,9 @@ void CellArea::drawSoundTextColumn(QPainter &p, int r0, int r1, int col) {
       p.fillRect(info.rect, QBrush(tmpCellColor));
 
       if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-          !o->isVerticalTimeline() && info.row == m_viewer->getCurrentRow() &&
+          info.row == m_viewer->getCurrentRow() &&
           Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-        drawCurrentTimeIndicator(p, info.xy);
+        drawCurrentTimeIndicator(p, info.xy, col);
 
       drawDragHandle(p, info.xy, sideColor);
       drawEndOfDragHandle(p, info.row == rowTo, info.xy, tmpCellColor);
@@ -2658,10 +2690,9 @@ void CellArea::drawPaletteCell(QPainter &p, int row, int col,
   if (cell.isEmpty() && prevCell.isEmpty()) {
     drawFrameSeparator(p, row, col, true);
     if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-        !m_viewer->orientation()->isVerticalTimeline() &&
         row == m_viewer->getCurrentRow() &&
         Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-      drawCurrentTimeIndicator(p, xy);
+      drawCurrentTimeIndicator(p, xy, col);
 
     // only draw mark
     if (markId >= 0) {
@@ -2699,10 +2730,9 @@ void CellArea::drawPaletteCell(QPainter &p, int row, int col,
       p.drawEllipse(markRect);
     }
     if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-        !m_viewer->orientation()->isVerticalTimeline() &&
         row == m_viewer->getCurrentRow() &&
         Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-      drawCurrentTimeIndicator(p, xy);
+      drawCurrentTimeIndicator(p, xy, col);
 
     return;
   }
@@ -2728,10 +2758,9 @@ void CellArea::drawPaletteCell(QPainter &p, int row, int col,
     p.fillRect(rect, QBrush(cellColor));
 
   if (TApp::instance()->getCurrentFrame()->isEditingScene() &&
-      !m_viewer->orientation()->isVerticalTimeline() &&
       row == m_viewer->getCurrentRow() &&
       Preferences::instance()->isCurrentTimelineIndicatorEnabled())
-    drawCurrentTimeIndicator(p, xy);
+    drawCurrentTimeIndicator(p, xy, col);
 
   drawDragHandle(p, xy, sideColor);
   bool isLastRow = nextCell.isEmpty() ||
@@ -3114,20 +3143,7 @@ void CellArea::paintEvent(QPaintEvent *event) {
   drawNotes(p, toBeUpdated);
 
   // focus cell border
-  QPoint frameAdj = m_viewer->getFrameZoomAdjustment();
-  int row         = m_viewer->getCurrentRow();
-  int col         = m_viewer->getCurrentColumn();
-  QPoint xy       = m_viewer->positionToXY(CellPosition(row, col));
-  QRect rect =
-      m_viewer->orientation()
-          ->rect((col < 0) ? PredefinedRect::CAMERA_CELL : PredefinedRect::CELL)
-          .translated(xy)
-          .adjusted(0, 0, -1 - frameAdj.x(), -frameAdj.y());
-  p.setPen(m_viewer->getCellFocusColor());
-  p.setBrush(Qt::NoBrush);
-  for (int i = 0; i < 2; i++)  // thick border within cell
-    p.drawRect(QRect(rect.topLeft() + QPoint(i, i),
-                     rect.size() - QSize(2 * i, 2 * i)));
+  drawFocusCellBorder(p);
 
   if (getDragTool()) getDragTool()->drawCellsArea(p);
 }
