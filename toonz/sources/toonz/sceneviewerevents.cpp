@@ -446,6 +446,8 @@ void SceneViewer::onEnter() {
 
   m_isMouseEntered = true;
 
+  currentlyPressedKeys.clear();
+
   TApp *app = TApp::instance();
   app->setActiveViewer(this);
   TTool *tool      = app->getCurrentTool()->getTool();
