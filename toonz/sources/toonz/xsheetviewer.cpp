@@ -133,11 +133,11 @@ void XsheetViewer::getColumnColor(QColor &color, QColor &sideColor, int index,
     if (xsh->getColumn(index)->getSoundColumn()) {
       color     = m_soundColumnColor;
       sideColor = m_soundColumnBorderColor;
-    } else {
+    } /* else {
       TXshCell cell = xsh->getCell(r0, index);
       int ltype;
       getCellTypeAndColors(ltype, color, sideColor, cell);
-    }
+    } */
   }
   if (xsh->getColumn(index)->isMask()) color = QColor(255, 0, 255);
 }
