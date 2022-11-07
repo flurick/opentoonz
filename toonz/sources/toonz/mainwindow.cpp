@@ -79,7 +79,7 @@ TEnv::IntVar BCheckToggleAction("BCheckToggleAction", 0);
 TEnv::IntVar GCheckToggleAction("GCheckToggleAction", 0);
 TEnv::IntVar ACheckToggleAction("ACheckToggleAction", 0);
 TEnv::IntVar LinkToggleAction("LinkToggleAction", 0);
-TEnv::IntVar DockingCheckToggleAction("DockingCheckToggleAction", 0);
+TEnv::IntVar DockingCheckToggleAction("DockingCheckToggleAction", 1);
 TEnv::IntVar ShiftTraceToggleAction("ShiftTraceToggleAction", 0);
 TEnv::IntVar EditShiftToggleAction("EditShiftToggleAction", 0);
 TEnv::IntVar NoShiftToggleAction("NoShiftToggleAction", 0);
