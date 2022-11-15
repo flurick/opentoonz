@@ -403,8 +403,8 @@ void SceneViewerPanel::hideEvent(QHideEvent *event) {
 //-----------------------------------------------------------------------------
 
 void SceneViewerPanel::resizeEvent(QResizeEvent *e) {
-  QWidget::resizeEvent(e);
-  repaint();
+  //QWidget::resizeEvent(e);
+  //repaint();
   m_sceneViewer->update();
 }
 
