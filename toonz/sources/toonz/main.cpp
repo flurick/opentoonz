@@ -1,13 +1,12 @@
 
 
 // Tnz6 includes
+#include <GL/freeglut_std.h>
 #include "crashhandler.h"
 #include "mainwindow.h"
-#include "flipbook.h"
 #include "tapp.h"
 #include "iocommand.h"
 #include "previewfxmanager.h"
-#include "cleanupsettingspopup.h"
 #include "filebrowsermodel.h"
 #include "expressionreferencemanager.h"
 #include "thirdparty.h"
@@ -34,7 +33,6 @@
 #include "toonz/studiopalette.h"
 #include "toonz/stylemanager.h"
 #include "toonz/tscenehandle.h"
-#include "toonz/txshsimplelevel.h"
 #include "toonz/tproject.h"
 #include "toonz/scriptengine.h"
 
@@ -45,26 +43,21 @@
 #include "tnzimage.h"
 
 // TnzBase includes
-#include "permissionsmanager.h"
 #include "tenv.h"
 #include "tcli.h"
 
 // TnzCore includes
 #include "tsystem.h"
 #include "tthread.h"
-#include "tthreadmessage.h"
 #include "tundo.h"
 #include "tconvert.h"
 #include "tiio_std.h"
 #include "timagecache.h"
-#include "tofflinegl.h"
-#include "tpluginmanager.h"
 #include "tsimplecolorstyles.h"
 #include "toonz/imagestyles.h"
 #include "tvectorbrushstyle.h"
 #include "tfont.h"
 
-#include "kis_tablet_support_win8.h"
 
 #ifdef MACOSX
 #include "tipc.h"
