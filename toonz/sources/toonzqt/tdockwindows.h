@@ -43,7 +43,7 @@ class DVAPI TMainWindow : public QWidget {
   QWidget *m_menu;
 
 public:
-  TMainWindow(QWidget *parent = 0, Qt::WindowFlags flags = 0);
+  TMainWindow(QWidget *parent = 0);
   virtual ~TMainWindow();
 
   void addDockWidget(TDockWidget *item);

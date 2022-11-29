@@ -363,13 +363,12 @@ void Room::load(const TFilePath &fp) {
 //-----------------------------------------------------------------------------
 
 #if QT_VERSION >= 0x050500
-MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent,
-                       Qt::WindowFlags flags)
+MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent)
 #else
 MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent,
                        Qt::WFlags flags)
 #endif
-    : QMainWindow(parent, flags)
+    : QMainWindow(parent)
     , m_saveSettingsOnQuit(true)
     , m_oldRoomIndex(0)
     , m_layoutName("") {

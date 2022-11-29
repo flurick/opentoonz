@@ -30,8 +30,8 @@ class TDockDecoAllocator final : public DockDecoAllocator {
 //    TMainWindow
 //-----------------------
 
-TMainWindow::TMainWindow(QWidget *parent, Qt::WindowFlags flags)
-    : QWidget(parent, flags) {
+TMainWindow::TMainWindow(QWidget *parent)
+    : QWidget(parent) {
   // Delete on close
   setAttribute(Qt::WidgetAttribute(Qt::WA_DeleteOnClose));
 

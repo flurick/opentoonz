@@ -32,11 +32,11 @@ class Room final : public TMainWindow {
 
 public:
 #if QT_VERSION >= 0x050500
-  Room(QWidget *parent = 0, Qt::WindowFlags flags = 0)
+  Room(QWidget *parent = 0)
 #else
   Room(QWidget *parent = 0, Qt::WFlags flags = 0)
 #endif
-      : TMainWindow(parent, flags) {
+      : TMainWindow(parent) {
   }
 
   ~Room() {}
@@ -74,8 +74,7 @@ class MainWindow final : public QMainWindow {
 
 public:
 #if QT_VERSION >= 0x050500
-  MainWindow(const QString &argumentLayoutFileName, QWidget *parent = 0,
-             Qt::WindowFlags flags = 0);
+  MainWindow(const QString &argumentLayoutFileName, QWidget *parent = 0);
 #else
   MainWindow(const QString &argumentLayoutFileName, QWidget *parent = 0,
              Qt::WFlags flags = 0);
