@@ -470,7 +470,7 @@ int main(int argc, char *argv[]) {
   bool isRunScript = (loadFilePath.getType() == "toonzscript");
 
   QSplashScreen splash(splashPixmap);
-  if (!isRunScript) splash.show();
+  //if (!isRunScript) splash.show();
   a.processEvents();
 
   splash.showMessage(offsetStr + "Initializing QGLFormat...", Qt::AlignCenter,
