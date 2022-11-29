@@ -1263,7 +1263,7 @@ void MainWindow::onMenuCheckboxChanged() {
 //-----------------------------------------------------------------------------
 
 void MainWindow::showEvent(QShowEvent *event) {
-  getCurrentRoom()->layout()->setEnabled(true);  // See main function in
+  //getCurrentRoom()->layout()->setEnabled(true);  // See main function in
                                                  // main.cpp
   if (Preferences::instance()->isStartupPopupEnabled() &&
       !m_startupPopupShown) {
