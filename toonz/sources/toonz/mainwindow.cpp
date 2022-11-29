@@ -375,6 +375,7 @@ MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent,
     , m_layoutName("") {
   // store a main window pointer in advance of making its contents
   TApp::instance()->setMainWindow(this);
+  show();
 
   m_toolsActionGroup = new QActionGroup(this);
   m_toolsActionGroup->setExclusive(true);

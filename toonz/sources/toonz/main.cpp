@@ -775,7 +775,7 @@ int main(int argc, char *argv[]) {
   if (Preferences::instance()->isLatestVersionCheckEnabled())
     w.checkForUpdates();
 
-  w.show();
+  //w.show();
 
   // Show floating panels only after the main window has been shown
   w.startupFloatingPanels();
