@@ -740,7 +740,7 @@ static void buildAutocloseImage(
     points[0]       = p1;
     points[1]       = 0.5 * (p1 + p2);
     points[2]       = p2;
-    points[0].thick = points[1].thick = points[2].thick = 0.0;
+    points[0].thick = points[1].thick = points[2].thick = 20.0;
     TStroke *auxStroke                                  = new TStroke(points);
     auxStroke->setStyle(2);
     vaux->addStroke(auxStroke);
@@ -753,7 +753,7 @@ static void drawAutocloses(TVectorImage *vi, TVectorRenderData &rd) {
   static TPalette *plt = 0;
   if (!plt) {
     plt = new TPalette();
-    plt->addStyle(TPixel::Magenta);
+    plt->addStyle(TPixelRGBM32(0xff, 0, 0xff, 0xa0));
   }
 
   std::vector<std::pair<int, double>> startPoints, endPoints;
