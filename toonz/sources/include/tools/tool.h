@@ -503,7 +503,7 @@ transformation.
 */
   virtual void addContextMenuItems(QMenu *menu) {}
 
-  void enable(bool on) { m_enabled = on; }
+  void enable(bool on) { m_enabled = true; }
   bool isEnabled() const { return m_enabled; }
 
   QString updateEnabled();  //!< Sets the tool's \a enability and returns a
