@@ -732,7 +732,7 @@ EditTool::~EditTool() {
 void EditTool::updateTranslation() {
   m_scaleConstraint.setQStringName(tr("Scale Constraint:"));
   m_scaleConstraint.setItemUIName(L"None", tr("None"));
-  m_scaleConstraint.setItemUIName(L"A/R", tr("A/R"));
+  m_scaleConstraint.setItemUIName(L"A/R", tr("Aspect Ratio"));
   m_scaleConstraint.setItemUIName(L"Mass", tr("Mass"));
 
   m_autoSelect.setQStringName(tr("Auto Select Column"));
@@ -753,7 +753,7 @@ void EditTool::updateTranslation() {
   m_lockGlobalScale.setQStringName(tr("Lock Global Scale"));
   m_showEWNSposition.setQStringName(tr("X and Y Positions"));
   m_showZposition.setQStringName(tr("Z Position"));
-  m_showSOposition.setQStringName(tr("SO"));
+  m_showSOposition.setQStringName(tr("Sorting Order"));
   m_showRotation.setQStringName(tr("Rotation"));
   m_showGlobalScale.setQStringName(tr("Global Scale"));
   m_showHVscale.setQStringName(tr("Horizontal and Vertical Scale"));
