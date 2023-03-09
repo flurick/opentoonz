@@ -1516,6 +1516,7 @@ Filmstrip::Filmstrip(QWidget *parent, Qt::WindowFlags flags) : QWidget(parent) {
   m_frameArea->setFrameStyle(QFrame::StyledPanel);
   setOrientation(m_isVertical);
 
+
   m_frameArea->setWidget(m_frames);
 
   m_chooseLevelCombo->setMaxVisibleItems(50);
@@ -1803,6 +1804,9 @@ void Filmstrip::updateWindowTitle() {
   TXshSimpleLevel *level = m_frames->getLevel();
 
   QString levelName;
+
+  parentWidget()->setToolTip("This panel lists the drawings in the currently selected Level\n"
+                             "Drawings can be added/exposed in a scene's Column");
 
   if (!level) {
     parentWidget()->setWindowTitle(tr("Level Strip"));
