@@ -446,6 +446,7 @@ ArrowToolOptionsBox::ArrowToolOptionsBox(
         new ToolOptionCheckbox(m_tool, lockProp, toolHandle, this);
   // stacking order
   m_soLabel = new ClickableLabel(tr("SO:"), this);
+  m_soLabel->setToolTip("Sorting Order");
   m_soField = new PegbarChannelField(m_tool, TStageObject::T_SO, "field",
                                      frameHandle, objHandle, xshHandle, this);
 
@@ -1121,8 +1122,10 @@ SelectionToolOptionsBox::SelectionToolOptionsBox(QWidget *parent, TTool *tool,
   if (tool && tool->getProperties(0)) tool->getProperties(0)->accept(builder);
 
   m_scaleXLabel = new ClickableLabel(tr("H:"), this);
+  m_scaleXLabel->setToolTip("Width");
   m_scaleXField = new SelectionScaleField(selectionTool, 0, "Scale X");
   m_scaleYLabel = new ClickableLabel(tr("V:"), this);
+  m_scaleXLabel->setToolTip("Height");
   m_scaleYField = new SelectionScaleField(selectionTool, 1, "Scale Y");
   m_scaleLink   = new DVGui::CheckBox(tr("Link"), this);
 
