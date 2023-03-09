@@ -1348,6 +1348,8 @@ void PaletteViewer::changeWindowTitle() {
   }
 
   titleOwner->setWindowTitle(name);
+  titleOwner->setToolTip("This show the selected Level's palette of styles\n"
+                         "A style is both a color and a brush preset");
 }
 
 //-----------------------------------------------------------------------------
