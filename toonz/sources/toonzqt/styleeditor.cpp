@@ -3545,17 +3545,17 @@ void StyleEditor::onStyleSwitched() {
 
   /* ------ update the status text ------ */
   if (!isStyleNull && isValidIndex) {
-    QString statusText;
+    QString statusText = "Style Editor - ";
     // palette type
     if (isCleanUpPalette)
-      statusText = tr("Cleanup ");
+      statusText += tr("cleanup ");
     else if (palette->getGlobalName() != L"")
-      statusText = tr("Studio ");
+      statusText += tr("studio ");
     else
-      statusText = tr("Level ");
+      statusText += tr("level ");
 
     // palette name
-    statusText += tr("Palette") + " : " +
+    statusText += tr("palette") + " : " +
                   QString::fromStdWString(palette->getPaletteName());
 
     // style name
@@ -3572,6 +3572,8 @@ void StyleEditor::onStyleSwitched() {
     m_parent->setWindowTitle(tr("Style Editor - No Valid Style Selected"));
   }
   enable(!isStyleNull && isValidIndex, isColorInField, isCleanUpPalette);
+
+  parentWidget()->setToolTip("This panel edit the selected style in the pallete.\nA style is made up of a color, type and settings.");
 
   updateStylePages();
 }
