@@ -53,7 +53,7 @@
 //-----------------------------------
 
 namespace {
-const TDimension IconSize(80, 60);
+const TDimension IconSize(256, 144); //16:9 ratio (or 1.77:1)
 TDimension FilmstripIconSize(0, 0);
 
 // Access name-based storage
@@ -1383,7 +1383,7 @@ QPixmap IconGenerator::getIcon(TXshLevel *xl, const TFrameId &fid,
 
     if (onDemand) return pix;
 
-    TDimension iconSize = TDimension(80, 60);
+    TDimension iconSize = IconSize;
 
     // The icon must be calculated - add an IconRenderer task.
     // storeIcon(id, QPixmap());   //It was automatically added by the former
@@ -1416,7 +1416,7 @@ QPixmap IconGenerator::getIcon(TXshLevel *xl, const TFrameId &fid,
     // Disable transparency check for cast and xsheet icons
     if (!filmStrip) m_settings = IconGenerator::Settings();
 
-    TDimension iconSize = filmStrip ? m_iconSize : TDimension(80, 60);
+    TDimension iconSize = filmStrip ? m_iconSize : IconSize;
 
     // storeIcon(id, QPixmap());
 
@@ -1465,7 +1465,7 @@ QPixmap IconGenerator::getSizedIcon(TXshLevel *xl, const TFrameId &fid,
 
     // if (onDemand) return pix;
 
-    TDimension iconSize = TDimension(80, 60);
+    TDimension iconSize = IconSize;
     if (dim != TDimension(0, 0)) {
       iconSize = dim;
     }
@@ -1501,7 +1501,7 @@ QPixmap IconGenerator::getSizedIcon(TXshLevel *xl, const TFrameId &fid,
     // Disable transparency check for cast and xsheet icons
     // if (!filmStrip) m_settings = IconGenerator::Settings();
 
-    TDimension iconSize = TDimension(80, 60);
+    TDimension iconSize = IconSize;
     if (dim != TDimension(0, 0)) {
       iconSize = dim;
     }
@@ -1592,22 +1592,22 @@ void IconGenerator::invalidate(TXshLevel *xl, const TFrameId &fid,
     switch (type) {
     case OVL_XSHLEVEL:
     case TZI_XSHLEVEL:
-      addTask(id, new RasterImageIconRenderer(id, TDimension(80, 60), sl, fid));
+      addTask(id, new RasterImageIconRenderer(id, IconSize, sl, fid));
       break;
     case PLI_XSHLEVEL:
-      addTask(id, new VectorImageIconRenderer(id, TDimension(80, 60), sl, fid,
+      addTask(id, new VectorImageIconRenderer(id, IconSize, sl, fid,
                                               m_settings));
       break;
     case TZP_XSHLEVEL:
       if (sl->getFrameStatus(fid) == TXshSimpleLevel::Scanned)
         addTask(id,
-                new RasterImageIconRenderer(id, TDimension(80, 60), sl, fid));
+                new RasterImageIconRenderer(id, IconSize, sl, fid));
       else
-        addTask(id, new ToonzImageIconRenderer(id, TDimension(80, 60), sl, fid,
+        addTask(id, new ToonzImageIconRenderer(id, IconSize, sl, fid,
                                                m_settings));
       break;
     case MESH_XSHLEVEL:
-      addTask(id, new MeshImageIconRenderer(id, TDimension(80, 60), sl, fid,
+      addTask(id, new MeshImageIconRenderer(id, IconSize, sl, fid,
                                             m_settings));
       break;
     default:
@@ -1682,7 +1682,7 @@ QPixmap IconGenerator::getIcon(const TFilePath &path, const TFrameId &fid) {
   std::string id = FileIconRenderer::getId(path, fid);
 
   QPixmap pix;
-  TDimension fileIconSize(80, 60);
+  TDimension fileIconSize = IconSize;
   // Here the fileIconSize is input in order to check if the icon is obtained
   // with high-dpi (i.e. devPixRatio > 1.0).
   if (::getIcon(id, pix, 0, fileIconSize)) return pix;
@@ -1697,7 +1697,7 @@ QPixmap IconGenerator::getIcon(const TFilePath &path, const TFrameId &fid) {
 void IconGenerator::invalidate(const TFilePath &path, const TFrameId &fid) {
   std::string id = FileIconRenderer::getId(path, fid);
   removeIcon(id);
-  addTask(id, new FileIconRenderer(TDimension(80, 60), path, fid));
+  addTask(id, new FileIconRenderer(IconSize, path, fid));
 }
 
 //-----------------------------------------------------------------------------
