@@ -734,7 +734,8 @@ TDottedLineStrokeStyle::TDottedLineStrokeStyle()
     , m_in(10.0)
     , m_line(50.0)
     , m_out(10.0)
-    , m_blank(10.0) {}
+    , m_blank(10.0)
+    , m_offset(0.0) {}
 
 //-----------------------------------------------------------------------------
 
@@ -744,7 +745,7 @@ TColorStyle *TDottedLineStrokeStyle::clone() const {
 
 //-----------------------------------------------------------------------------
 
-int TDottedLineStrokeStyle::getParamCount() const { return 4; }
+int TDottedLineStrokeStyle::getParamCount() const { return 5; }
 
 //-----------------------------------------------------------------------------
 
@@ -756,7 +757,7 @@ TColorStyle::ParamType TDottedLineStrokeStyle::getParamType(int index) const {
 //-----------------------------------------------------------------------------
 
 QString TDottedLineStrokeStyle::getParamNames(int index) const {
-  assert(0 <= index && index < 4);
+  assert(0 <= index && index < 5);
   QString value;
   switch (index) {
   case 0:
@@ -771,6 +772,9 @@ QString TDottedLineStrokeStyle::getParamNames(int index) const {
   case 3:
     value = QCoreApplication::translate("TDottedLineStrokeStyle", "Gap");
     break;
+  case 4:
+    value = QCoreApplication::translate("TDottedLineStrokeStyle", "Offset (%)");
+    break;
   }
   return value;
 }
@@ -779,7 +783,7 @@ QString TDottedLineStrokeStyle::getParamNames(int index) const {
 
 void TDottedLineStrokeStyle::getParamRange(int index, double &min,
                                            double &max) const {
-  assert(0 <= index && index < 4);
+  assert(0 <= index && index < 5);
   switch (index) {
   case 0:
     min = 1.0;
@@ -797,6 +801,10 @@ void TDottedLineStrokeStyle::getParamRange(int index, double &min,
     min = 0.0;
     max = 100.0;
     break;
+  case 4:
+    min = -100.0;
+    max = 100.0;
+    break;
   }
 }
 
@@ -804,7 +812,7 @@ void TDottedLineStrokeStyle::getParamRange(int index, double &min,
 
 double TDottedLineStrokeStyle::getParamValue(TColorStyle::double_tag,
                                              int index) const {
-  assert(0 <= index && index < 4);
+  assert(0 <= index && index < 5);
   double value = 0;
   switch (index) {
   case 0:
@@ -819,6 +827,9 @@ double TDottedLineStrokeStyle::getParamValue(TColorStyle::double_tag,
   case 3:
     value = m_blank;
     break;
+  case 4:
+    value = m_offset;
+    break;
   }
   return value;
 }
@@ -826,7 +837,7 @@ double TDottedLineStrokeStyle::getParamValue(TColorStyle::double_tag,
 //-----------------------------------------------------------------------------
 
 void TDottedLineStrokeStyle::setParamValue(int index, double value) {
-  assert(0 <= index && index < 4);
+  assert(0 <= index && index < 5);
   switch (index) {
   case 0:
     m_in = value;
@@ -839,6 +850,9 @@ void TDottedLineStrokeStyle::setParamValue(int index, double value) {
     break;
   case 3:
     m_blank = value;
+    break;
+  case 4:
+    m_offset = value;
     break;
   }
   updateVersionNumber();
@@ -856,6 +870,7 @@ void TDottedLineStrokeStyle::computeData(Points &positions,
   double inmax    = (m_in / 100);
   double outmax   = (m_out / 100);
   double blankmax = m_blank;
+  double offset   = m_offset; //offset in length %
   double total    = 0;
   TRandom rnd;
 
@@ -864,15 +879,15 @@ void TDottedLineStrokeStyle::computeData(Points &positions,
 
   TPointD oldPos1, oldPos2, oldPos3, oldPos4, pos1, pos2, pos3, pos4;
   // bool firstRing = true;
-  double s            = 0;
-  double meter        = 0;
+  double s            = 0; //used to step through the line
+  double meter        = 0; //used to get each steps slope
   double center       = 0;
-  double slopetmp     = 0;
+  double slopetmp     = 0; //seemingly unused
   double minthickness = MINTHICK * sqrt(tglGetPixelSize2());
   double thickness    = 0;
   double line = 0, in = 0, out = 0, blank = 0;
   while (s <= length) {
-    double w = stroke->getParameterAtLength(s);
+    double w = stroke->getParameterAtLength(s + (length*(offset*0.01)) );
     if (w < 0) {
       s += 0.1;
       continue;
