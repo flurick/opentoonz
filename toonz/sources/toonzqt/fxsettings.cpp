@@ -65,43 +65,6 @@ bool hasEmptyInputPort(const TFxP &currentFx) {
   if (currentFx->getInputPortCount() == 0) return false;
   return hasEmptyInputPort(currentFx->getInputPort(0)->getFx());
 }
-/*
-TFxP cloneInputPort(const TFxP &currentFx)
-{
-        int i;
-  for (i=0; i<getInputPortCount(); ++i)
-  {
-                TFx *inputFx = sceneFx->getInputPort(i)->getFx();
-                if(inputFx)
-                {
-                        if(TLevelColumnFx* affFx = dynamic_cast<TLevelColumnFx*
->(inputFx))
-                                currentFx->getInputPort(i)->setFx(inputFx);
-                        else
-                                currentFx->getInputPort(i)->setFx(cloneInputPort());
-                }
-                TFxPort *port = getInputPort(i);
-                if (port->getFx())
-                        fx->connect(getInputPortName(i),
-cloneInputPort(port->getFx()));
-}
-void setLevelFxInputPort(const TFxP &currentFx, const TFxP &sceneFx)
-{
-        for (int i=0; i<sceneFx->getInputPortCount(); ++i)
-        {
-                TFx *inputFx = sceneFx->getInputPort(i)->getFx();
-                if(inputFx)
-                {
-                        if(TLevelColumnFx* affFx = dynamic_cast<TLevelColumnFx*
->(inputFx))
-                                currentFx->getInputPort(i)->setFx(inputFx);
-                        else
-                                setLevelFxInputPort(currentFx->getInputPort(i)->getFx(),
-inputFx);
-                }
-        }
-}
-*/
 
 // find the field by parameter name and register the field and its label widget
 bool findItemByParamName(QLayout *layout, std::string name,
@@ -131,7 +94,6 @@ bool findItemByParamName(QLayout *layout, std::string name,
   }
   return false;
 };
-
 }  // namespace
 
 //=============================================================================
@@ -192,6 +154,7 @@ void ParamsPage::setPageField(TIStream &is, const TFxP &fx, bool isVertical) {
       std::string name;
       is >> name;
       is.matchEndTag();
+
       /*-- Layout設定名とFxParameterの名前が一致するものを取得 --*/
       TParamP param = fx->getParams()->getParam(name);
       bool isHidden =
@@ -301,9 +264,15 @@ void ParamsPage::setPageField(TIStream &is, const TFxP &fx, bool isVertical) {
           tmpWidget->setVisible(shrink == 1);
         } else {  // modeSensitiveStr != ""
           QList<int> modes;
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+          QStringList modeListStr =
+              QString::fromStdString(is.getTagAttribute("mode"))
+                  .split(',', Qt::SkipEmptyParts);
+#else
           QStringList modeListStr =
               QString::fromStdString(is.getTagAttribute("mode"))
                   .split(',', QString::SkipEmptyParts);
+#endif
           for (QString modeNum : modeListStr) modes.push_back(modeNum.toInt());
           // find the mode combobox
           ModeChangerParamField *modeChanger = nullptr;
@@ -343,6 +312,7 @@ void ParamsPage::setPageField(TIStream &is, const TFxP &fx, bool isVertical) {
         m_mainLayout->setColumnStretch(0, 0);
         m_mainLayout->setColumnStretch(1, 1);
         setPageField(is, fx, true);
+
         tmpWidget->setLayout(m_mainLayout);
         // turn back the layout
         m_mainLayout = keepMainLay;
@@ -660,7 +630,7 @@ void updateMaximumPageSize(QGridLayout *layout, int &maxLabelWidth,
     QGroupBox *gBox =
         dynamic_cast<QGroupBox *>(layout->itemAtPosition(r, 0)->widget());
     if (label) {
-      int tmpWidth = label->fontMetrics().width(label->text());
+      int tmpWidth = label->fontMetrics().horizontalAdvance(label->text());
       if (maxLabelWidth < tmpWidth) maxLabelWidth = tmpWidth;
     }
     /*-- PlugInFxのGroupパラメータのサイズ --*/
@@ -729,11 +699,7 @@ QSize ParamsPage::getPreferredSize() {
 // ParamsPageSet
 //-----------------------------------------------------------------------------
 
-#if QT_VERSION >= 0x050500
 ParamsPageSet::ParamsPageSet(QWidget *parent, Qt::WindowFlags flags)
-#else
-ParamsPageSet::ParamsPageSet(QWidget *parent, Qt::WFlags flags)
-#endif
     : QWidget(parent, flags)
     , m_preferredSize(0, 0)
     , m_helpFilePath("")
@@ -759,6 +725,13 @@ ParamsPageSet::ParamsPageSet(QWidget *parent, Qt::WFlags flags)
   m_helpButton->setObjectName("FxSettingsHelpButton");
   m_helpButton->setFocusPolicy(Qt::NoFocus);
 
+  m_warningMark = new QLabel(this);
+  static QIcon warningIcon(":Resources/paramignored_on.svg");
+  m_warningMark->setPixmap(warningIcon.pixmap(QSize(22, 22)));
+  m_warningMark->setFixedSize(22, 22);
+  m_warningMark->setStyleSheet(
+      "margin: 0px; padding: 0px; background-color: rgba(0,0,0,0);");
+
   //----layout
   QVBoxLayout *mainLayout = new QVBoxLayout();
   mainLayout->setMargin(0);
@@ -769,6 +742,7 @@ ParamsPageSet::ParamsPageSet(QWidget *parent, Qt::WFlags flags)
     hLayout->addSpacing(0);
     {
       hLayout->addWidget(m_tabBar);
+      hLayout->addWidget(m_warningMark);
       hLayout->addStretch(1);
       hLayout->addWidget(m_helpButton);
     }
@@ -872,7 +846,7 @@ void ParamsPageSet::addParamsPage(ParamsPage *page, const char *name) {
   /*-- このFxで最大サイズのページに合わせてダイアログをリサイズ --*/
   QSize pagePreferredSize = page->getPreferredSize();
   m_preferredSize         = m_preferredSize.expandedTo(
-              pagePreferredSize + QSize(m_tabBarContainer->height() + 2,
+      pagePreferredSize + QSize(m_tabBarContainer->height() + 2,
                                         2)); /*-- 2は上下左右のマージン --*/
 
   QScrollArea *pane = new QScrollArea(this);
@@ -976,7 +950,7 @@ void ParamsPageSet::createPage(TIStream &is, const TFxP &fx, int index) {
   /*-- このFxで最大サイズのページに合わせてダイアログをリサイズ --*/
   QSize pagePreferredSize = paramsPage->getPreferredSize();
   m_preferredSize         = m_preferredSize.expandedTo(
-              pagePreferredSize + QSize(m_tabBarContainer->height() + 2,
+      pagePreferredSize + QSize(m_tabBarContainer->height() + 2,
                                         2)); /*-- 2は上下左右のマージン --*/
 
   QScrollArea *scrollAreaPage = new QScrollArea(this);
@@ -1046,15 +1020,54 @@ void ParamsPageSet::openHelpUrl() {
   QDesktopServices::openUrl(QUrl(QString(m_helpUrl.c_str())));
 }
 
+void ParamsPageSet::updateWarnings(const TFxP &currentFx, bool isFloat) {
+  if (!isFloat) {
+    m_warningMark->hide();
+    return;
+  }
+
+  bool isFloatSupported = true;
+
+  TMacroFx *currentFxMacro = dynamic_cast<TMacroFx *>(currentFx.getPointer());
+  if (currentFxMacro) {
+    const std::vector<TFxP> &currentFxMacroFxs = currentFxMacro->getFxs();
+    for (auto fxP : currentFxMacroFxs) {
+      TRasterFx *rasFx = dynamic_cast<TRasterFx *>(fxP.getPointer());
+      if (rasFx) {
+        isFloatSupported = isFloatSupported & rasFx->canComputeInFloat();
+      }
+      if (!isFloatSupported) break;
+    }
+  } else {
+    TRasterFx *rasFx = dynamic_cast<TRasterFx *>(currentFx.getPointer());
+    if (rasFx) {
+      isFloatSupported = rasFx->canComputeInFloat();
+    }
+  }
+
+  bool showFloatWarning = isFloat && !isFloatSupported;
+  if (!showFloatWarning) {
+    m_warningMark->hide();
+    return;
+  }
+
+  QString warningTxt;
+  if (showFloatWarning) {
+    warningTxt +=
+        tr("This Fx does not support rendering in floating point channel width "
+           "(32bit).\n"
+           "The output pixel values from this fx will be clamped to 0.0 - 1.0\n"
+           "and tone may be slightly discretized.");
+  }
+  m_warningMark->setToolTip(warningTxt);
+  m_warningMark->show();
+}
+
 //=============================================================================
 // ParamViewer
 //-----------------------------------------------------------------------------
 
-#if QT_VERSION >= 0x050500
 ParamViewer::ParamViewer(QWidget *parent, Qt::WindowFlags flags)
-#else
-ParamViewer::ParamViewer(QWidget *parent, Qt::WFlags flags)
-#endif
     : QFrame(parent, flags), m_fx(0) {
   m_tablePageSet = new QStackedWidget(this);
   m_tablePageSet->addWidget(new QWidget());
@@ -1188,6 +1201,13 @@ void ParamViewer::setPointValue(int index, const TPointD &p) {
 
 ParamsPageSet *ParamViewer::getCurrentPageSet() const {
   return dynamic_cast<ParamsPageSet *>(m_tablePageSet->currentWidget());
+}
+
+//-----------------------------------------------------------------------------
+// show warning if the current Fx does not support float / linear rendering
+void ParamViewer::updateWarnings(const TFxP &currentFx, bool isFloat) {
+  if (getCurrentPageSet())
+    getCurrentPageSet()->updateWarnings(currentFx, isFloat);
 }
 
 //=============================================================================
@@ -1395,11 +1415,24 @@ void FxSettings::setFx(const TFxP &currentFx, const TFxP &actualFx) {
   ToonzScene *scene = 0;
   if (m_sceneHandle) scene = m_sceneHandle->getScene();
 
+  // check if the current render settings are float
+  bool isFloat = false;
+  if (scene) {
+    const TRenderSettings ps =
+        scene->getProperties()->getPreviewProperties()->getRenderSettings();
+    const TRenderSettings os =
+        scene->getProperties()->getOutputProperties()->getRenderSettings();
+    isFloat = (ps.m_bpp == 128) || (os.m_bpp == 128);
+  }
+
   int frameIndex = 0;
   if (m_frameHandle) frameIndex = m_frameHandle->getFrameIndex();
 
   m_paramViewer->setFx(currentFxWithoutCamera, actualFx, frameIndex, scene);
   m_paramViewer->setIsCameraViewMode(m_isCameraModeView);
+  // show warning if the current Fx does not support float / linear rendering
+  m_paramViewer->updateWarnings(currentFxWithoutCamera, isFloat);
+
   m_viewer->setCameraMode(m_isCameraModeView);
 
   TDimension cameraSize = TDimension(-1, -1);

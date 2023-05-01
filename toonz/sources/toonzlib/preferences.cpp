@@ -47,7 +47,8 @@ const char *s_name = "name", *s_regexp = "regexp", *s_priority = "priority";
 
 const char *s_dpiPolicy = "dpiPolicy", *s_dpi = "dpi",
            *s_subsampling = "subsampling", *s_antialias = "antialias",
-           *s_premultiply = "premultiply", *s_whiteTransp = "whiteTransp";
+           *s_premultiply = "premultiply", *s_whiteTransp = "whiteTransp",
+           *s_colorSpaceGamma = "colorSpaceGamma";
 
 //=================================================================
 
@@ -124,6 +125,7 @@ void setValue(QSettings &settings, const LevelOptions &lo) {
   settings.setValue(s_antialias, lo.m_antialias);
   settings.setValue(s_premultiply, int(lo.m_premultiply));
   settings.setValue(s_whiteTransp, int(lo.m_whiteTransp));
+  settings.setValue(s_colorSpaceGamma, lo.m_colorSpaceGamma);
 }
 
 //-----------------------------------------------------------------
@@ -138,6 +140,8 @@ void getValue(const QSettings &settings, LevelOptions &lo) {
       (settings.value(s_premultiply, lo.m_premultiply).toInt() != 0);
   lo.m_whiteTransp =
       (settings.value(s_whiteTransp, lo.m_whiteTransp).toInt() != 0);
+  lo.m_colorSpaceGamma =
+      settings.value(s_colorSpaceGamma, lo.m_colorSpaceGamma).toDouble();
 }
 
 //-----------------------------------------------------------------
@@ -463,7 +467,7 @@ void Preferences::definePreferenceItems() {
   define(removeSceneNumberFromLoadedLevelName,
          "removeSceneNumberFromLoadedLevelName", QMetaType::Bool, false);
   define(IgnoreImageDpi, "IgnoreImageDpi", QMetaType::Bool, false);
-  define(initialLoadTlvCachingBehavior, "initialLoadTlvCachingBehavior",
+  define(rasterLevelCachingBehavior, "rasterLevelCachingBehavior",
          QMetaType::Int, 0);  // On Demand
   define(columnIconLoadingPolicy, "columnIconLoadingPolicy", QMetaType::Int,
          (int)LoadAtOnce);
@@ -563,6 +567,10 @@ void Preferences::definePreferenceItems() {
   define(xsheetAutopanEnabled, "xsheetAutopanEnabled", QMetaType::Bool, true);
   define(DragCellsBehaviour, "DragCellsBehaviour", QMetaType::Int,
          1);  // Cells and Column Data
+  define(deleteCommandBehavior, "deleteCommandBehavior", QMetaType::Int,
+         0);  // Clear Cell / Frame
+  define(pasteCellsBehavior, "pasteCellsBehavior", QMetaType::Int,
+         0);  // Insert paste whole cell data
   define(ignoreAlphaonColumn1Enabled, "ignoreAlphaonColumn1Enabled",
          QMetaType::Bool, false);
   define(showKeyframesOnXsheetCellArea, "showKeyframesOnXsheetCellArea",
@@ -794,6 +802,16 @@ void Preferences::resolveCompatibility() {
       !m_settings->contains("DefRasterFormat")) {
     setValue(DefRasterFormat, m_settings->value("scanLevelType").toString());
   }
+  // "initialLoadTlvCachingBehavior" is changed to "rasterLevelCachingBehavior"
+  // , Now this setting also applies to raster levels (previously only Toonz
+  // raster levels). It also applies to any operation that loads a level, such
+  // as loading scene or loading a recent level. (Previously, this was only
+  // available from the Load Level popup.)
+  if (m_settings->contains("initialLoadTlvCachingBehavior") &&
+      !m_settings->contains("rasterLevelCachingBehavior")) {
+    setValue(rasterLevelCachingBehavior,
+             m_settings->value("initialLoadTlvCachingBehavior").toInt());
+  }
 }
 
 //-----------------------------------------------------------------
@@ -965,8 +983,10 @@ void Preferences::setRasterBackgroundColor() {
 //-----------------------------------------------------------------
 
 void Preferences::storeOldUnits() {
-  setValue(oldUnits, getStringValue(linearUnits));
-  setValue(oldCameraUnits, getStringValue(cameraUnits));
+  QString linearU = getStringValue(linearUnits);
+  if (linearU != "pixel") setValue(oldUnits, linearU);
+  QString cameraU = getStringValue(cameraUnits);
+  if (cameraU != "pixel") setValue(oldCameraUnits, cameraU);
 }
 
 //-----------------------------------------------------------------

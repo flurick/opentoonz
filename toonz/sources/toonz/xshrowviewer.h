@@ -61,6 +61,8 @@ class RowArea final : public QWidget {
   void drawStopMotionCameraIndicator(QPainter &p);
 #endif
 
+  void drawNavigationTags(QPainter &p, int r0, int r1);
+
   DragTool *getDragTool() const;
   void setDragTool(DragTool *dragTool);
 
@@ -71,11 +73,7 @@ class RowArea final : public QWidget {
   int getNonEmptyCell(int row, int column, Direction);
 
 public:
-#if QT_VERSION >= 0x050500
-  RowArea(XsheetViewer *parent, Qt::WindowFlags flags = 0);
-#else
-  RowArea(XsheetViewer *parent, Qt::WFlags flags = 0);
-#endif
+  RowArea(XsheetViewer *parent, Qt::WindowFlags flags = Qt::WindowFlags());
   ~RowArea();
 
 protected:
@@ -101,6 +99,9 @@ protected slots:
 
   // set both the from and to markers at the specified row
   void onPreviewThis();
+
+protected slots:
+  void onJumpToTag();
 };
 
 }  // namespace XsheetGUI

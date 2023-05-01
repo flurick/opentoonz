@@ -65,6 +65,7 @@ set(HEADERS
     sandor_fxs/patternmap.h
     sandor_fxs/toonz4_6staff.h
     ../include/convert2tlv.h
+    ../include/thirdparty.h
     ../include/orientation.h
     ../include/toonz/Naa2TlvConverter.h
     ../include/toonz/autoclose.h
@@ -163,6 +164,7 @@ set(HEADERS
     ../include/toonz/txsheetcolumnchange.h
     ../include/toonz/expressionreferencemonitor.h
     ../include/toonz/filepathproperties.h
+    ../include/toonz/navigationtags.h
 )
 
 set(SOURCES
@@ -246,6 +248,7 @@ set(SOURCES
     tcolumnfxset.cpp
     tdistort.cpp
     texturemanager.cpp
+    thirdparty.cpp
     tlog.cpp
     tnewoutlinevectorize.cpp
     toonzfolders.cpp
@@ -322,6 +325,7 @@ set(SOURCES
     textureutils.cpp
     boardsettings.cpp
     filepathproperties.cpp
+    navigationtags.cpp
 )
 
 if(BUILD_TARGET_WIN)

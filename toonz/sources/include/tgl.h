@@ -3,7 +3,7 @@
 #ifndef TGL_INCLUDED
 #define TGL_INCLUDED
 
-//#include "tgeometry.h"
+// #include "tgeometry.h"
 #include "tmachine.h"
 
 #ifdef _WIN32
@@ -21,15 +21,15 @@
 #define GLUT_NO_WARNING_DISABLE
 #endif
 
-#if defined(LINUX) || defined(FREEBSD)
+#if defined(LINUX) || defined(FREEBSD) || defined(HAIKU)
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #endif
 
-//#include "tcurves.h"
+// #include "tcurves.h"
 #include "traster.h"
-//#include "tfilepath.h"
+// #include "tfilepath.h"
 
 class TFilePath;
 class TCubic;
@@ -73,6 +73,7 @@ class TCubic;
 
 #define TGL_TexFmt10 GL_RGB10_A2
 #define TGL_TYPE16 GL_UNSIGNED_SHORT
+#define TGL_TYPE32F GL_FLOAT
 
 //=============================================================================
 

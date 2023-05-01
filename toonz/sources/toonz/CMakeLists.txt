@@ -1,4 +1,4 @@
-set(VERSION 1.6)
+set(VERSION 1.7)
 
 set(MOC_HEADERS
     addfilmstripframespopup.h
@@ -66,6 +66,7 @@ set(MOC_HEADERS
     menubarpopup.h
     meshifypopup.h
     messagepanel.h
+    ocaio.h
     onionskinmaskgui.h
     outputsettingspopup.h
     overwritepopup.h
@@ -82,6 +83,7 @@ set(MOC_HEADERS
     ruler.h
     savepresetpopup.h
     scanpopup.h
+    scenebrowser.h
     scenesettingspopup.h
     sceneviewer.h
     sceneviewercontextmenu.h
@@ -128,6 +130,7 @@ set(MOC_HEADERS
     custompanelmanager.h
     custompaneleditorpopup.h
     convertfolderpopup.h
+    exportcameratrackpopup.h
 )
 
 if(PLATFORM EQUAL 64)
@@ -142,12 +145,14 @@ if(PLATFORM EQUAL 64)
         ../stopmotion/stopmotionlight.h
         cameracapturelevelcontrol.h
         penciltestpopup.h
+        navtageditorpopup.h
     )
 else()
     set(MOC_HEADERS
         ${MOC_HEADERS}
         cameracapturelevelcontrol_qt.h
         penciltestpopup_qt.h
+        navtageditorpopup.h
     )
 endif()
 
@@ -192,7 +197,6 @@ set(HEADERS
     ../include/orientation.h
     ../include/saveloadqsettings.h
     xdtsio.h
-    ocaio.h
     levelcommand.h
 # Tracker file
     ObjectTracker.h
@@ -285,6 +289,8 @@ set(SOURCES
     runscriptcommand.cpp
     savepresetpopup.cpp
     scanpopup.cpp
+    scenebrowser.cpp
+    scenebrowserversioncontrol.cpp
     sceneviewercontextmenu.cpp
     scenesettingspopup.cpp
     scriptconsolepanel.cpp
@@ -377,6 +383,7 @@ set(SOURCES
     custompanelmanager.cpp
     custompaneleditorpopup.cpp
     convertfolderpopup.cpp
+    exportcameratrackpopup.cpp
 # Tracker file
     dummyprocessor.cpp
     metnum.cpp
@@ -396,12 +403,14 @@ if(PLATFORM EQUAL 64)
         ../stopmotion/stopmotionlight.cpp
         cameracapturelevelcontrol.cpp
         penciltestpopup.cpp
+        navtageditorpopup.cpp
     )
 else()
     set(SOURCES
         ${SOURCES}
         cameracapturelevelcontrol_qt.cpp
         penciltestpopup_qt.cpp
+        navtageditorpopup.cpp
     )
 endif()
 
@@ -531,7 +540,7 @@ elseif(BUILD_ENV_UNIXLIKE)
     # 変なところにライブラリ生成するカスども
     set(EXTRA_LIBS ${EXTRA_LIBS} "$<TARGET_FILE:tnzstdfx>" "$<TARGET_FILE:tfarm>")
 
-    set(EXTRA_LIBS ${EXTRA_LIBS} ${Boost_LIBRARIES} ${OPENBLAS_LIB})
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${Boost_LIBRARIES} ${OPENBLAS_LIB} ${EXECINFO_LIBRARY})
     if(PLATFORM EQUAL 64)
         set(EXTRA_LIBS ${EXTRA_LIBS} Qt5::SerialPort ${TURBOJPEG_LIB} ${OpenCV_LIBS})
     endif()
@@ -692,7 +701,7 @@ TOONZSTUDIOPALETTE=\"\$HOME/.config/OpenToonz/stuff/studiopalette\"
 EOF
 fi
 
-export LD_LIBRARY_PATH=\${OPENTOONZ_BASE}/lib/opentoonz:\${LD_LIBRARY_PATH}
+export ${PRELOAD_VARIABLE}=\${OPENTOONZ_BASE}/lib/opentoonz:\${${PRELOAD_VARIABLE}}
 
 exec \$OPENTOONZ_BASE/bin/OpenToonz \"\$@\"
 ")

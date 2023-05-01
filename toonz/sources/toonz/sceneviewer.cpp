@@ -1,5 +1,5 @@
 
-#if defined(LINUX) || defined(FREEBSD)
+#if defined(LINUX) || defined(FREEBSD) || defined(HAIKU)
 #define GL_GLEXT_PROTOTYPES
 #endif
 
@@ -14,6 +14,8 @@
 #if defined(x64)
 #include "../stopmotion/stopmotion.h"
 #endif
+#include "tenv.h"
+#include "cellselection.h"
 
 // TnzTools includes
 #include "tools/cursors.h"
@@ -61,6 +63,7 @@
 #include "toonz/toonzimageutils.h"
 #include "toonz/txshleveltypes.h"
 #include "subcameramanager.h"
+#include "toutputproperties.h"
 
 // TnzCore includes
 #include "tpalette.h"
@@ -79,11 +82,7 @@
 #include <QMenu>
 #include <QApplication>
 #include <QDesktopWidget>
-#if QT_VERSION >= 0x050000
 #include <QInputMethod>
-#else
-#include <QInputContext>
-#endif
 #include <QGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QMainWindow>
@@ -92,6 +91,11 @@
 
 void drawSpline(const TAffine &viewMatrix, const TRect &clipRect, bool camera3d,
                 double pixelSize);
+
+// 0: current frame
+// 1: all frames in the preview range
+// 2: selected cell, auto play once & stop
+TEnv::IntVar EnvViewerPreviewBehavior("ViewerPreviewBehavior", 0);
 
 //-------------------------------------------------------------------------------
 namespace {
@@ -804,10 +808,8 @@ SceneViewer::SceneViewer(ImageUtils::FullScreenWidget *parent)
   setFocusPolicy(Qt::StrongFocus);
   setAcceptDrops(true);
   this->setMouseTracking(true);
-// introduced from Qt 5.9
-#if QT_VERSION >= 0x050900
+  // introduced from Qt 5.9
   this->setTabletTracking(true);
-#endif
 
   for (int i = 0; i < m_viewAff.size(); ++i) {
     setViewMatrix(getNormalZoomScale(), i);
@@ -946,19 +948,53 @@ void SceneViewer::enablePreview(int previewMode) {
     emit freezeStateChanged(false);
   }
 
-  if (m_previewMode != NO_PREVIEW)
+  if (m_previewMode != NO_PREVIEW) {
     Previewer::instance(m_previewMode == SUBCAMERA_PREVIEW)
         ->removeListener(this);
-
-  // Schedule as a listener to Previewer.
-  if (previewMode != NO_PREVIEW) {
-    Previewer *previewer =
-        Previewer::instance(previewMode == SUBCAMERA_PREVIEW);
-    previewer->addListener(this);
-    previewer->update();
+    Previewer::instance(m_previewMode == SUBCAMERA_PREVIEW)
+        ->clearAllUnfinishedFrames();
   }
 
   m_previewMode = previewMode;
+
+  // Schedule as a listener to Previewer.
+  if (m_previewMode != NO_PREVIEW) {
+    Previewer *previewer =
+        Previewer::instance(m_previewMode == SUBCAMERA_PREVIEW);
+
+    previewer->addListener(this);
+    // 0: current frame
+    // 1: all frames in the preview range
+    // 2: selected cell, auto play once & stop
+    if (EnvViewerPreviewBehavior == 1) {
+      int r0, r1, step;
+      ToonzScene *scene = app->getCurrentScene()->getScene();
+      scene->getProperties()->getPreviewProperties()->getRange(r0, r1, step);
+      if (r0 > r1) {
+        r0 = 0;
+        r1 = scene->getFrameCount() - 1;
+      }
+      int currentFrame = app->getCurrentFrame()->getFrame();
+      std::vector<int> queueFrames;
+      for (int f = currentFrame; f <= r1; f += step) queueFrames.push_back(f);
+      for (int f = r0; f < currentFrame; f += step) queueFrames.push_back(f);
+
+      previewer->addFramesToRenderQueue(queueFrames);
+    } else if (EnvViewerPreviewBehavior == 2) {
+      TCellSelection *cellSel =
+          dynamic_cast<TCellSelection *>(TSelection::getCurrent());
+      if (cellSel && !cellSel->isEmpty()) {
+        int r0, c0, r1, c1;
+        cellSel->getSelectedCells(r0, c0, r1, c1);
+        if (r0 < r1) {
+          std::vector<int> queueFrames;
+          for (int f = r0; f <= r1; f++) queueFrames.push_back(f);
+          previewer->addFramesToRenderQueue(queueFrames);
+        }
+      }
+    }
+    previewer->update();
+  }
 
   GLInvalidateAll();
 
@@ -1025,7 +1061,8 @@ void SceneViewer::showEvent(QShowEvent *) {
   m_visualSettings.m_sceneProperties =
       TApp::instance()->getCurrentScene()->getScene()->getProperties();
 
-  // If the viewer is hidden and preview is activated, remove the listener from preview
+  // If the viewer is hidden and preview is activated, remove the listener from
+  // preview
   if (m_previewMode != NO_PREVIEW)
     Previewer::instance(m_previewMode == SUBCAMERA_PREVIEW)->addListener(this);
 
@@ -1035,7 +1072,7 @@ void SceneViewer::showEvent(QShowEvent *) {
   bool ret = connect(sceneHandle, SIGNAL(sceneSwitched()), this,
                      SLOT(resetSceneViewer()));
   ret      = ret && connect(sceneHandle, SIGNAL(sceneChanged()), this,
-                       SLOT(onSceneChanged()));
+                            SLOT(onSceneChanged()));
   ret = ret && connect(sceneHandle, SIGNAL(preferenceChanged(const QString &)),
                        this, SLOT(onPreferenceChanged(const QString &)));
 
@@ -1112,7 +1149,8 @@ void SceneViewer::showEvent(QShowEvent *) {
 //-----------------------------------------------------------------------------
 
 void SceneViewer::hideEvent(QHideEvent *) {
-  // If the viewer is hidden and preview is activated, remove the listener from preview
+  // If the viewer is hidden and preview is activated, remove the listener from
+  // preview
   if (m_previewMode != NO_PREVIEW)
     Previewer::instance(m_previewMode == SUBCAMERA_PREVIEW)
         ->removeListener(this);
@@ -1856,7 +1894,7 @@ static void drawFpsGraph(int t0, int t1) {
 
 //-----------------------------------------------------------------------------
 
-//#define FPS_HISTOGRAM
+// #define FPS_HISTOGRAM
 
 void SceneViewer::paintGL() {
 #ifdef _DEBUG
@@ -2670,9 +2708,9 @@ void SceneViewer::fitToCamera() {
   TPointD P01       = cameraAff * cameraRect.getP01();
   TPointD P11       = cameraAff * cameraRect.getP11();
   TPointD p0        = TPointD(std::min({P00.x, P01.x, P10.x, P11.x}),
-                       std::min({P00.y, P01.y, P10.y, P11.y}));
+                              std::min({P00.y, P01.y, P10.y, P11.y}));
   TPointD p1        = TPointD(std::max({P00.x, P01.x, P10.x, P11.x}),
-                       std::max({P00.y, P01.y, P10.y, P11.y}));
+                              std::max({P00.y, P01.y, P10.y, P11.y}));
   cameraRect        = TRectD(p0.x, p0.y, p1.x, p1.y);
 
   // Pan
@@ -2715,9 +2753,9 @@ void SceneViewer::fitToCameraOutline() {
   TPointD P01       = cameraAff * cameraRect.getP01();
   TPointD P11       = cameraAff * cameraRect.getP11();
   TPointD p0        = TPointD(std::min({P00.x, P01.x, P10.x, P11.x}),
-                       std::min({P00.y, P01.y, P10.y, P11.y}));
+                              std::min({P00.y, P01.y, P10.y, P11.y}));
   TPointD p1        = TPointD(std::max({P00.x, P01.x, P10.x, P11.x}),
-                       std::max({P00.y, P01.y, P10.y, P11.y}));
+                              std::max({P00.y, P01.y, P10.y, P11.y}));
   cameraRect        = TRectD(p0.x, p0.y, p1.x, p1.y);
 
   // Pan
@@ -3197,11 +3235,7 @@ void drawSpline(const TAffine &viewMatrix, const TRect &clipRect, bool camera3d,
 //-----------------------------------------------------------------------------
 
 void SceneViewer::resetInputMethod() {
-#if QT_VERSION >= 0x050000
   QGuiApplication::inputMethod()->reset();
-#else
-  qApp->inputContext()->reset();
-#endif
 }
 
 //-----------------------------------------------------------------------------

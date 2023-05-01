@@ -28,8 +28,15 @@
 #include <QPainter>
 #include <QApplication>
 #include <QMainWindow>
+#include <QStandardPaths>
 
 using namespace DVGui;
+
+TFilePath getStdDocumentsPath() {
+  QString documentsPath =
+      QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0];
+  return TFilePath(documentsPath);
+}
 
 //------------------------------------------------------------------------
 namespace {
@@ -182,9 +189,10 @@ void ExportSceneDvDirModelRootNode::refreshChildren() {
   int i;
   for (i = 0; i < (int)projectRoots.size(); i++) {
     TFilePath projectRoot = projectRoots[i];
+    std::wstring rootDir  = projectRoot.getWideString();
     ExportSceneDvDirModelSpecialFileFolderNode *projectRootNode =
-        new ExportSceneDvDirModelSpecialFileFolderNode(this, L"Project root",
-                                                       projectRoot);
+        new ExportSceneDvDirModelSpecialFileFolderNode(
+            this, L"Project root (" + rootDir + L")", projectRoot);
     projectRootNode->setPixmap(QPixmap(recolorPixmap(
         svgToPixmap(getIconThemePath("actions/18/folder_project_root.svg")))));
     m_projectRootNodes.push_back(projectRootNode);
@@ -265,7 +273,7 @@ DvDirModelNode *ExportSceneDvDirModel::getNode(const QModelIndex &index) const {
 QModelIndex ExportSceneDvDirModel::index(int row, int column,
                                          const QModelIndex &parent) const {
   if (column != 0) return QModelIndex();
-  DvDirModelNode *parentNode       = m_root;
+  DvDirModelNode *parentNode = m_root;
   if (parent.isValid()) parentNode = getNode(parent);
   if (row < 0 || row >= parentNode->getChildCount()) return QModelIndex();
   DvDirModelNode *node = parentNode->getChild(row);
@@ -455,10 +463,10 @@ ExportSceneTreeView::ExportSceneTreeView(QWidget *parent)
   // bottom horizontal scrollbar to resize contents...
   bool ret = connect(this, SIGNAL(expanded(const QModelIndex &)), this,
                      SLOT(resizeToConts()));
-  ret = ret && connect(this, SIGNAL(collapsed(const QModelIndex &)), this,
-                       SLOT(resizeToConts()));
-  ret = ret && connect(this->model(), SIGNAL(layoutChanged()), this,
-                       SLOT(resizeToConts()));
+  ret      = ret && connect(this, SIGNAL(collapsed(const QModelIndex &)), this,
+                            SLOT(resizeToConts()));
+  ret      = ret && connect(this->model(), SIGNAL(layoutChanged()), this,
+                            SLOT(resizeToConts()));
 
   assert(ret);
   setAcceptDrops(true);
@@ -526,6 +534,7 @@ ExportScenePopup::ExportScenePopup(std::vector<TFilePath> scenes)
 
   m_projectTreeView = new ExportSceneTreeView(chooseProjectWidget);
   m_projectTreeView->setMinimumWidth(200);
+  m_projectTreeView->setMinimumWidth(400);
   ret = ret && connect(m_projectTreeView, SIGNAL(focusIn()), this,
                        SLOT(onProjectTreeViweFocusIn()));
   chooseProjectLayout->addWidget(m_projectTreeView);
@@ -548,9 +557,19 @@ ExportScenePopup::ExportScenePopup(std::vector<TFilePath> scenes)
 
   m_newProjectName = new LineEdit(newProjectWidget);
   ret              = ret && connect(m_newProjectName, SIGNAL(focusIn()), this,
-                       SLOT(onProjectNameFocusIn()));
+                                    SLOT(onProjectNameFocusIn()));
   newProjectLayout->setColumnStretch(1, 5);
   newProjectLayout->addWidget(m_newProjectName, 1, 1, 1, 1, Qt::AlignLeft);
+
+  m_pathFieldLabel = new QLabel(tr("Create In:"), this);
+  m_projectLocationFld =
+      new DVGui::FileField(this, getStdDocumentsPath().getQString());
+  ret = ret && connect(m_projectLocationFld->getField(), SIGNAL(focusIn()),
+                       this, SLOT(onProjectNameFocusIn()));
+
+  newProjectLayout->addWidget(m_pathFieldLabel, 2, 0,
+                              Qt::AlignRight | Qt::AlignVCenter);
+  newProjectLayout->addWidget(m_projectLocationFld, 2, 1);
 
   newProjectWidget->setLayout(chooseProjectLayout);
   layout->addWidget(newProjectWidget);
@@ -673,16 +692,16 @@ TFilePath ExportScenePopup::createNewProject() {
     return TFilePath();
   }
 
-  TFilePath currentProjectRoot;
-  DvDirModelFileFolderNode *node = dynamic_cast<DvDirModelFileFolderNode *>(
-      m_projectTreeView->getCurrentNode());
-  if (node)
-    currentProjectRoot = node->getPath();
-  else
-    currentProjectRoot    = pm->getCurrentProjectRoot();
-  TFilePath projectFolder = currentProjectRoot + projectName;
+  TFilePath newLocation   = TFilePath(m_projectLocationFld->getPath());
+  TFilePath projectFolder = newLocation + projectName;
   TFilePath projectPath   = pm->projectFolderToProjectPath(projectFolder);
-  TProject *project       = new TProject();
+
+  if (TSystem::doesExistFileOrLevel(projectPath)) {
+    error(tr("Project '%1' already exists").arg(m_newProjectName->text()));
+    return TFilePath();
+  }
+
+  TProject *project = new TProject();
 
   TProjectP currentProject = pm->getCurrentProject();
   assert(currentProject);
@@ -691,7 +710,7 @@ TFilePath ExportScenePopup::createNewProject() {
     project->setFolder(currentProject->getFolderName(i),
                        currentProject->getFolder(i));
   project->save(projectPath);
-  DvDirModel::instance()->refreshFolder(currentProjectRoot);
+  DvDirModel::instance()->refreshFolder(newLocation);
 
   return projectPath;
 }

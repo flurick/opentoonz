@@ -18,6 +18,7 @@
 #include "flipbook.h"
 #include "castviewer.h"
 #include "filebrowser.h"
+#include "scenebrowser.h"
 #include "filmstrip.h"
 #include "previewfxmanager.h"
 #include "comboviewerpane.h"
@@ -658,6 +659,7 @@ public:
 
   TPanel *createPanel(QWidget *parent) override {
     PaletteViewerPanel *panel = new PaletteViewerPanel(parent);
+    panel->setFixWidthMode(TPanel::sizeable);
     panel->setObjectName(getPanelType());
     panel->setWindowTitle(QObject::tr(("Level Palette")));
 
@@ -941,6 +943,7 @@ public:
 
   TPanel *createPanel(QWidget *parent) override {
     StyleEditorPanel *panel = new StyleEditorPanel(parent);
+    panel->setFixWidthMode(TPanel::sizeable);
     panel->setObjectName(getPanelType());
     panel->setWindowTitle(QObject::tr("Style Editor"));
     return panel;
@@ -960,6 +963,7 @@ public:
   ToolbarFactory() : TPanelFactory("ToolBar") {}
   void initialize(TPanel *panel) override {
     Toolbar *toolbar = new Toolbar(panel);
+    panel->setFixWidthMode(TPanel::fixed);
     panel->setWidget(toolbar);
     panel->setIsMaximizable(false);
     // panel->setAllowedAreas(Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea);
@@ -1206,6 +1210,23 @@ public:
     browser->enableDoubleClickToOpenScenes();
   }
 } browserFactory;
+
+//=============================================================================
+// PreproductionBoardFactory
+//-----------------------------------------------------------------------------
+class PreproductionBoardFactory final : public TPanelFactory {
+public:
+  PreproductionBoardFactory() : TPanelFactory("PreproductionBoard") {}
+  void initialize(TPanel *panel) override {
+    SceneBrowser *browser = new SceneBrowser(panel, 0, false, true);
+    panel->setWidget(browser);
+    panel->setWindowTitle(QObject::tr("Preproduction Board"));
+    TFilePath scenesFolder =
+        TProjectManager::instance()->getCurrentProject()->getScenesPath();
+    browser->setFolder(scenesFolder, true);
+    browser->enableSingleClickToOpenScenes();
+  }
+} PreproductionBoardFactory;
 
 //=============================================================================
 // CastViewerFactory

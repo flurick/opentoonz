@@ -10,6 +10,7 @@
 #include "cleanupsettingspopup.h"
 #include "filebrowsermodel.h"
 #include "expressionreferencemanager.h"
+#include "thirdparty.h"
 
 // TnzTools includes
 #include "tools/tool.h"
@@ -251,9 +252,7 @@ int main(int argc, char *argv[]) {
     freopen("CON", "r", stdin);
     freopen("CON", "w", stdout);
     freopen("CON", "w", stderr);
-    atexit([]() {
-      ::FreeConsole();
-    });
+    atexit([]() { ::FreeConsole(); });
   }
 #endif
 
@@ -320,11 +319,9 @@ int main(int argc, char *argv[]) {
     argc = 1;
   }
 
-// Enables high-DPI scaling. This attribute must be set before QApplication is
-// constructed. Available from Qt 5.6.
-#if QT_VERSION >= 0x050600
+  // Enables high-DPI scaling. This attribute must be set before QApplication is
+  // constructed. Available from Qt 5.6.
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif
 
   QApplication a(argc, argv);
 
@@ -482,7 +479,9 @@ int main(int argc, char *argv[]) {
   fmt.setStencil(true);
   QGLFormat::setDefaultFormat(fmt);
 
+#ifndef __HAIKU__
   glutInit(&argc, argv);
+#endif
 
   splash.showMessage(offsetStr + "Initializing Toonz environment ...",
                      Qt::AlignCenter, Qt::white);
@@ -494,6 +493,9 @@ int main(int argc, char *argv[]) {
 
   // Toonz environment
   initToonzEnv(argumentPathValues);
+
+  // Setup third party
+  ThirdParty::initialize();
 
   // prepare for 30bit display
   if (Preferences::instance()->is30bitDisplayEnabled()) {

@@ -17,7 +17,9 @@
 #include "toonzqt/strokesdata.h"
 #include "toonzqt/rasterimagedata.h"
 #include "timagecache.h"
+#include "tools/toolhandle.h"
 #include "tools/toolutils.h"
+#include "tools/rasterselection.h"
 #include "toonzqt/icongenerator.h"
 
 #include "tundo.h"
@@ -1171,6 +1173,52 @@ public:
   int getHistoryType() override { return HistoryType::FilmStrip; }
 };
 
+//-----------------------------------------------------------------------------
+
+class RemoveFramesUndo final : public TUndo {
+  TXshSimpleLevel *m_sl;
+  std::set<TFrameId> m_framesRemoved;
+  DrawingData *m_oldData;
+
+public:
+  RemoveFramesUndo(TXshSimpleLevel *sl, std::set<TFrameId> &framesRemoved,
+                   DrawingData *oldData)
+      : m_sl(sl), m_framesRemoved(framesRemoved), m_oldData(oldData) {}
+
+  ~RemoveFramesUndo() {
+    if (m_oldData) m_oldData->releaseData();
+  }
+
+  void undo() const override {
+    std::set<TFrameId> frames = m_framesRemoved;
+    bool dummy                = true;
+    pasteFramesWithoutUndo(m_oldData, m_sl, frames, DrawingData::OVER_SELECTION,
+                           true, dummy);
+    TApp::instance()->getCurrentXsheet()->notifyXsheetChanged();
+  }
+
+  void redo() const override {
+    std::set<TFrameId> frames = m_framesRemoved;
+    removeFramesWithoutUndo(m_sl, frames);
+  }
+
+  int getSize() const override { return sizeof(*this); }
+
+  QString getHistoryString() override {
+    QString str = QObject::tr("Remove Frames  : Level %1 : Frame ")
+                      .arg(QString::fromStdWString(m_sl->getName()));
+
+    std::set<TFrameId>::const_iterator it;
+    for (it = m_framesRemoved.begin(); it != m_framesRemoved.end(); it++) {
+      if (it != m_framesRemoved.begin()) str += QString(", ");
+      str += QString::number((*it).getNumber());
+    }
+
+    return str;
+  }
+  int getHistoryType() override { return HistoryType::FilmStrip; }
+};
+
 }  // namespace
 
 //=============================================================================
@@ -1555,9 +1603,66 @@ void FilmstripCmd::paste(TXshSimpleLevel *sl, std::set<TFrameId> &frames) {
         (frames.size() == 1) ? !sl->isFid((*frames.begin())) : false;
     TTileSet *tileSet = 0;
     std::map<TFrameId, std::set<int>> indices;
-    TUndo *undo   = 0;
-    TPaletteP plt = sl->getPalette()->clone();
-    bool isPaste  = pasteAreasWithoutUndo(data, sl, frames, &tileSet, indices);
+    TUndo *undo      = 0;
+    TPaletteP plt    = sl->getPalette()->clone();
+    QImage clipImage = clipboard->image();
+
+    FullColorImageData *fullColorData =
+        dynamic_cast<FullColorImageData *>(data);
+
+    if ((!clipImage.isNull() || fullColorData) &&
+        sl->getType() != OVL_XSHLEVEL) {
+      DVGui::error(QObject::tr(
+          "Can't paste full raster data on a non full raster level."));
+      return;
+    }
+
+    if (sl->getType() == OVL_XSHLEVEL && !clipImage.isNull()) {
+      // This stuff is only if we have a pasted image from outside OpenToonz
+
+      if (sl->getResolution().lx < clipImage.width() ||
+          sl->getResolution().ly < clipImage.height()) {
+        clipImage =
+            clipImage.scaled(sl->getResolution().lx, sl->getResolution().ly,
+                             Qt::KeepAspectRatio);
+      }
+
+      // create variables to go into the Full Color Image data
+      std::vector<TRectD> rects;
+      const std::vector<TStroke> strokes;
+      const std::vector<TStroke> originalStrokes;
+      TAffine aff;
+      TRasterP ras = rasterFromQImage(clipImage);
+      rects.push_back(TRectD(0.0 - clipImage.width() / 2,
+                             0.0 - clipImage.height() / 2,
+                             clipImage.width() / 2, clipImage.height() / 2));
+      FullColorImageData *qimageData = new FullColorImageData();
+
+      TDimension dim = sl->getResolution();
+
+      qimageData->setData(ras, plt, 120.0, 120.0, dim, rects, strokes,
+                          originalStrokes, aff);
+      data = qimageData;
+      // end of pasted from outside OpenToonz stuff
+      // data holds all the info either way now.
+    }
+
+    if (sl && sl->getType() == OVL_XSHLEVEL) {
+      // make selection always work on new raster cells
+      ToolHandle *toolHandle = TApp::instance()->getCurrentTool();
+      if (toolHandle->getTool()->getName() == "T_Selection") {
+        TSelection *ts      = toolHandle->getTool()->getSelection();
+        RasterSelection *rs = dynamic_cast<RasterSelection *>(ts);
+        if (rs) {
+          toolHandle->getTool()->onDeactivate();
+          toolHandle->getTool()->onActivate();
+          rs->pasteSelection();
+          return;
+        }
+      }
+    }
+
+    bool isPaste = pasteAreasWithoutUndo(data, sl, frames, &tileSet, indices);
     RasterImageData *rasterImageData = dynamic_cast<RasterImageData *>(data);
     StrokesData *strokesData         = dynamic_cast<StrokesData *>(data);
     if (rasterImageData && tileSet)
@@ -1655,8 +1760,8 @@ void FilmstripCmd::pasteInto(TXshSimpleLevel *sl, std::set<TFrameId> &frames) {
 
     bool keepOriginalPalette = true;
     bool isPaste             = pasteFramesWithoutUndo(drawingData, sl, frames,
-                                          DrawingData::OVER_SELECTION, true,
-                                          keepOriginalPalette);
+                                                      DrawingData::OVER_SELECTION, true,
+                                                      keepOriginalPalette);
     if (!isPaste) return;
 
     TUndoManager::manager()->add(new PasteFramesUndo(
@@ -1709,6 +1814,31 @@ void FilmstripCmd::clear(TXshSimpleLevel *sl, std::set<TFrameId> &frames) {
   frames.clear();
   TUndoManager::manager()->add(
       new DeleteFramesUndo(sl, oldFrames, oldData, newData));
+}
+
+//=============================================================================
+// clear
+//-----------------------------------------------------------------------------
+
+void FilmstripCmd::remove(TXshSimpleLevel *sl, std::set<TFrameId> &frames) {
+  if (!sl || frames.empty() || sl->isSubsequence() || sl->isReadOnly()) return;
+
+  std::map<TFrameId, QString> imageSet;
+  std::set<TFrameId>::const_iterator it;
+  int i = 0;
+  for (it = frames.begin(); it != frames.end(); ++it, i++) {
+    TFrameId frameId = *it;
+    QString id       = "removeFrames" + QString::number((uintptr_t)sl) + "-" +
+                 QString::number(it->getNumber());
+    TImageCache::instance()->add(id, sl->getFrame(frameId, false));
+    imageSet[frameId] = id;
+  }
+  HookSet *levelHooks  = sl->getHookSet();
+  DrawingData *oldData = new DrawingData();
+  oldData->setFrames(imageSet, sl, *levelHooks);
+
+  removeFramesWithoutUndo(sl, frames);
+  TUndoManager::manager()->add(new RemoveFramesUndo(sl, frames, oldData));
 }
 
 //-----------------------------------------------------------------------------

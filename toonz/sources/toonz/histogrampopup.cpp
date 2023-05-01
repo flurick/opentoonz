@@ -25,6 +25,7 @@
 #include <QMainWindow>
 #include <QDesktopWidget>
 #include <QFocusEvent>
+#include <QScreen>
 
 using namespace DVGui;
 
@@ -87,6 +88,9 @@ void HistogramPopup::updateInfo(const TPixel64 &pix, const TPointD &imagePos) {
   m_histogram->updateInfo(pix, imagePos);
 }
 
+void HistogramPopup::updateInfo(const TPixelF &pix, const TPointD &imagePos) {
+  m_histogram->updateInfo(pix, imagePos);
+}
 //-----------------------------------------------------------------------------
 /*! show the average-picked color
  */
@@ -95,6 +99,10 @@ void HistogramPopup::updateAverageColor(const TPixel32 &pix) {
 }
 
 void HistogramPopup::updateAverageColor(const TPixel64 &pix) {
+  m_histogram->updateAverageColor(pix);
+}
+
+void HistogramPopup::updateAverageColor(const TPixelF &pix) {
   m_histogram->updateAverageColor(pix);
 }
 //-----------------------------------------------------------------------------
@@ -118,9 +126,13 @@ void HistogramPopup::moveNextToWidget(QWidget *widget) {
   if (minimumSize().isEmpty()) grab();
   QSize popupSize = frameSize();
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+  QRect screenRect = widget->screen()->availableGeometry();
+#else
   int currentScreen = QApplication::desktop()->screenNumber(widget);
   QRect screenRect  = QApplication::desktop()->availableGeometry(currentScreen);
-  QRect viewerRect  = widget->rect();
+#endif
+  QRect viewerRect = widget->rect();
   viewerRect.moveTo(widget->mapToGlobal(QPoint(0, 0)));
   // decide which side to open the popup
   QPoint popupPos = widget->mapToGlobal(QPoint(0, 0));

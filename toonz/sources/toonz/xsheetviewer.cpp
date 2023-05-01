@@ -35,6 +35,9 @@
 #include "toonz/txshlevelhandle.h"
 #include "toonz/tproject.h"
 #include "tconvert.h"
+#include "toonz/navigationtags.h"
+#include "toonz/txshlevelcolumn.h"
+#include "toonz/txshpalettecolumn.h"
 
 #include "tenv.h"
 
@@ -85,6 +88,11 @@ void XsheetViewer::getCellTypeAndColors(int &ltype, QColor &cellColor,
       cellColor =
           (isSelected) ? getSelectedLevelColumnColor() : getLevelColumnColor();
       sideColor = getLevelColumnBorderColor();
+      break;
+    case PLT_XSHLEVEL:
+      cellColor = (isSelected) ? getSelectedPaletteColumnColor()
+                               : getPaletteColumnColor();
+      sideColor = getPaletteColumnBorderColor();
       break;
     case ZERARYFX_XSHLEVEL:
       cellColor =
@@ -148,50 +156,50 @@ void XsheetViewer::getButton(const int &btype, QColor &bgColor,
                              QImage &iconImage, bool isTimeline) {
   switch (btype) {
   case PREVIEW_ON_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelinePreviewButtonBgOnColor()
-                           : getXsheetPreviewButtonBgOnColor();
+    bgColor   = (isTimeline) ? getTimelinePreviewButtonBgOnColor()
+                             : getXsheetPreviewButtonBgOnColor();
     iconImage = (isTimeline) ? getTimelinePreviewButtonOnImage()
                              : getXsheetPreviewButtonOnImage();
     break;
   case PREVIEW_OFF_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelinePreviewButtonBgOffColor()
-                           : getXsheetPreviewButtonBgOffColor();
+    bgColor   = (isTimeline) ? getTimelinePreviewButtonBgOffColor()
+                             : getXsheetPreviewButtonBgOffColor();
     iconImage = (isTimeline) ? getTimelinePreviewButtonOffImage()
                              : getXsheetPreviewButtonOffImage();
     break;
   case CAMSTAND_ON_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelineCamstandButtonBgOnColor()
-                           : getXsheetCamstandButtonBgOnColor();
+    bgColor   = (isTimeline) ? getTimelineCamstandButtonBgOnColor()
+                             : getXsheetCamstandButtonBgOnColor();
     iconImage = (isTimeline) ? getTimelineCamstandButtonOnImage()
                              : getXsheetCamstandButtonOnImage();
     break;
   case CAMSTAND_TRANSP_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelineCamstandButtonBgOnColor()
-                           : getXsheetCamstandButtonBgOnColor();
+    bgColor   = (isTimeline) ? getTimelineCamstandButtonBgOnColor()
+                             : getXsheetCamstandButtonBgOnColor();
     iconImage = (isTimeline) ? getTimelineCamstandButtonTranspImage()
                              : getXsheetCamstandButtonTranspImage();
     break;
   case CAMSTAND_OFF_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelineCamstandButtonBgOffColor()
-                           : getXsheetCamstandButtonBgOffColor();
+    bgColor   = (isTimeline) ? getTimelineCamstandButtonBgOffColor()
+                             : getXsheetCamstandButtonBgOffColor();
     iconImage = (isTimeline) ? getTimelineCamstandButtonOffImage()
                              : getXsheetCamstandButtonOffImage();
     break;
   case LOCK_ON_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelineLockButtonBgOnColor()
-                           : getXsheetLockButtonBgOnColor();
+    bgColor   = (isTimeline) ? getTimelineLockButtonBgOnColor()
+                             : getXsheetLockButtonBgOnColor();
     iconImage = (isTimeline) ? getTimelineLockButtonOnImage()
                              : getXsheetLockButtonOnImage();
     break;
   case LOCK_OFF_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelineLockButtonBgOffColor()
-                           : getXsheetLockButtonBgOffColor();
+    bgColor   = (isTimeline) ? getTimelineLockButtonBgOffColor()
+                             : getXsheetLockButtonBgOffColor();
     iconImage = (isTimeline) ? getTimelineLockButtonOffImage()
                              : getXsheetLockButtonOffImage();
     break;
   case CONFIG_XSHBUTTON:
-    bgColor = (isTimeline) ? getTimelineConfigButtonBgColor()
-                           : getXsheetConfigButtonBgColor();
+    bgColor   = (isTimeline) ? getTimelineConfigButtonBgColor()
+                             : getXsheetConfigButtonBgColor();
     iconImage = (isTimeline) ? getTimelineConfigButtonImage()
                              : getXsheetConfigButtonImage();
     break;
@@ -204,11 +212,7 @@ void XsheetViewer::getButton(const int &btype, QColor &bgColor,
 
 //-----------------------------------------------------------------------------
 
-#if QT_VERSION >= 0x050500
 XsheetViewer::XsheetViewer(QWidget *parent, Qt::WindowFlags flags)
-#else
-XsheetViewer::XsheetViewer(QWidget *parent, Qt::WFlags flags)
-#endif
     : QFrame(parent)
     , m_timerId(0)
     , m_autoPanSpeed(0, 0)
@@ -228,7 +232,6 @@ XsheetViewer::XsheetViewer(QWidget *parent, Qt::WFlags flags)
     , m_orientation(nullptr)
     , m_xsheetLayout("Classic")
     , m_frameZoomFactor(100) {
-
   m_xsheetLayout = Preferences::instance()->getLoadedXsheetLayout();
 
   setFocusPolicy(Qt::StrongFocus);
@@ -519,9 +522,22 @@ void XsheetViewer::setCurrentColumn(int col) {
       objectHandle->setObjectId(TStageObjectId::ColumnId(col));
       TXsheet *xsh       = getXsheet();
       TXshColumn *column = xsh->getColumn(col);
-      if (!column || !column->getZeraryFxColumn()) return;
-      TFx *fx = column->getZeraryFxColumn()->getZeraryColumnFx();
-      TApp::instance()->getCurrentFx()->setFx(fx);
+      if (!column) return;
+      // switching the current fx
+      TFx *fx                 = nullptr;
+      bool doSwitchFxSettings = false;
+      if (TXshLevelColumn *lc = column->getLevelColumn())
+        fx = lc->getLevelColumnFx();
+      else if (TXshPaletteColumn *pc =
+                   dynamic_cast<TXshPaletteColumn *>(column))
+        fx = pc->getPaletteColumnFx();
+      else if (TXshZeraryFxColumn *zc =
+                   dynamic_cast<TXshZeraryFxColumn *>(column)) {
+        fx                 = zc->getZeraryColumnFx();
+        doSwitchFxSettings = true;
+      }
+      if (!fx) return;
+      TApp::instance()->getCurrentFx()->setFx(fx, doSwitchFxSettings);
     }
     return;
   }
@@ -687,7 +703,7 @@ bool XsheetViewer::refreshContentSize(int dx, int dy) {
   QSize viewportSize = m_cellScrollArea->viewport()->size();
   QPoint offset      = m_cellArea->pos();
   offset             = QPoint(std::min(0, offset.x() - dx),
-                  std::min(0, offset.y() - dy));  // what?
+                              std::min(0, offset.y() - dy));  // what?
 
   TXsheet *xsh    = getXsheet();
   int frameCount  = xsh ? xsh->getFrameCount() : 0;
@@ -1385,6 +1401,18 @@ void XsheetViewer::onSceneSwitched() {
 void XsheetViewer::onXsheetChanged() {
   refreshContentSize(0, 0);
   updateAllAree();
+
+  int row                 = TApp::instance()->getCurrentFrame()->getFrame();
+  TXsheet *xsh            = getXsheet();
+  NavigationTags *navTags = xsh->getNavigationTags();
+  int lastTag             = navTags->getPrevTag(INT_MAX);
+  int firstTag            = navTags->getNextTag(-1);
+  CommandManager::instance()->enable(MI_NextTaggedFrame, (row < lastTag));
+  CommandManager::instance()->enable(MI_PrevTaggedFrame,
+                                     firstTag != -1 && row > firstTag);
+  CommandManager::instance()->enable(MI_EditTaggedFrame,
+                                     navTags->isTagged(row));
+  CommandManager::instance()->enable(MI_ClearTags, (navTags->getCount() > 0));
 }
 
 //-----------------------------------------------------------------------------
@@ -1409,6 +1437,16 @@ void XsheetViewer::onCurrentFrameSwitched() {
   }
   m_isCurrentFrameSwitched = false;
   scrollToRow(row);
+
+  TXsheet *xsh            = getXsheet();
+  NavigationTags *navTags = xsh->getNavigationTags();
+  int lastTag             = navTags->getPrevTag(INT_MAX);
+  int firstTag            = navTags->getNextTag(-1);
+  CommandManager::instance()->enable(MI_NextTaggedFrame, (row < lastTag));
+  CommandManager::instance()->enable(MI_PrevTaggedFrame,
+                                     firstTag != -1 && row > firstTag);
+  CommandManager::instance()->enable(MI_EditTaggedFrame,
+                                     navTags->isTagged(row));
 }
 
 //-----------------------------------------------------------------------------
@@ -1823,9 +1861,9 @@ QList<int> XsheetViewer::availableFramesPerPage() {
   ret << frameRate * 6;
 
   // visible area size
-  int size = (orientation()->isVerticalTimeline())
-                 ? m_cellScrollArea->viewport()->height()
-                 : m_cellScrollArea->viewport()->width();
+  int size     = (orientation()->isVerticalTimeline())
+                     ? m_cellScrollArea->viewport()->height()
+                     : m_cellScrollArea->viewport()->width();
   int scaleMin = (orientation()->isVerticalTimeline()) ? 50 : 20;
   int scaleMax = 100;
 
@@ -1852,9 +1890,9 @@ QList<int> XsheetViewer::availableFramesPerPage() {
 //----------------------------------------------------------------
 
 void XsheetViewer::zoomToFramesPerPage(int frames) {
-  int size = (orientation()->isVerticalTimeline())
-                 ? m_cellScrollArea->viewport()->height()
-                 : m_cellScrollArea->viewport()->width();
+  int size     = (orientation()->isVerticalTimeline())
+                     ? m_cellScrollArea->viewport()->height()
+                     : m_cellScrollArea->viewport()->width();
   int frameDim = orientation()->dimension(PredefinedDimension::FRAME);
 
   double scale = (double)size / ((double)frameDim * (double)frames);

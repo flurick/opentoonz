@@ -55,6 +55,8 @@
 #define MI_FreezePreview "MI_FrezzePreview"
 #define MI_SavePreviewedFrames "MI_SavePreviewedFrames"
 // #define MI_SavePreview         "MI_SavePreview"
+#define MI_ToggleViewerPreview "MI_ToggleViewerPreview"
+#define MI_ToggleViewerSubCameraPreview "MI_ToggleViewerSubCameraPreview"
 #define MI_Print "MI_Print"
 #define MI_Preferences "MI_Preferences"
 #define MI_SavePreset "MI_SavePreset"
@@ -85,6 +87,7 @@
 
 // #define MI_OpenCurrentScene  "MI_OpenCurrentScene"
 #define MI_OpenFileBrowser "MI_OpenFileBrowser"
+#define MI_OpenPreproductionBoard "MI_OpenPreproductionBoard"
 #define MI_OpenFileViewer "MI_OpenFileViewer"
 #define MI_OpenFilmStrip "MI_OpenFilmStrip"
 #define MI_OpenPalette "MI_OpenPalette"
@@ -260,6 +263,7 @@
 #define MI_CollectAssets "MI_CollectAssets"
 #define MI_ImportScenes "MI_ImportScenes"
 #define MI_ExportScenes "MI_ExportScenes"
+#define MI_ExportCurrentScene "MI_ExportCurrentScene"
 
 #define MI_SelectRowKeyframes "MI_SelectRowKeyframes"
 #define MI_SelectColumnKeyframes "MI_SelectColumnKeyframes"
@@ -359,11 +363,17 @@
 #define MI_TypeBoldOblique "MI_TypeBoldOblique"
 #define MI_TypeBold "MI_TypeBold"
 
+#define MI_PaintBrushNextMode "MI_PaintBrushNextMode"
+#define MI_PaintBrushAreas "MI_PaintBrushAreas"
+#define MI_PaintBrushLines "MI_PaintBrushLines"
+#define MI_PaintBrushLinesAndAreas "MI_PaintBrushLinesAndAreas"
+
 #define MI_FillNextType "MI_FillNextType"
 #define MI_FillNormal "MI_FillNormal"
 #define MI_FillRectangular "MI_FillRectangular"
 #define MI_FillFreehand "MI_FillFreehand"
 #define MI_FillPolyline "MI_FillPolyline"
+#define MI_FillFreepick "MI_FillFreepick"
 #define MI_FillNextMode "MI_FillNextMode"
 #define MI_FillAreas "MI_FillAreas"
 #define MI_FillLines "MI_FillLines"
@@ -460,6 +470,7 @@
 #define MI_ExportOCA "MI_ExportOCA"
 #define MI_ExportTvpJson "MI_ExportTvpJson"
 #define MI_ExportXsheetPDF "MI_ExportXsheetPDF"
+#define MI_ExportCameraTrack "MI_ExportCameraTrack"
 
 // mark id is added for each actual command (i.g. MI_SetCellMark1)
 #define MI_SetCellMark "MI_SetCellMark"
@@ -471,4 +482,12 @@
 #define MI_CustomPanelEditor "MI_CustomPanelEditor"
 
 #define MI_ConvertTZPInFolder "MI_ConvertTZPInFolder"
+
+// Navigation tags
+#define MI_ToggleTaggedFrame "MI_ToggleTaggedFrame"
+#define MI_EditTaggedFrame "MI_EditTaggedFrame"
+#define MI_NextTaggedFrame "MI_NextTaggedFrame"
+#define MI_PrevTaggedFrame "MI_PrevTaggedFrame"
+#define MI_ClearTags "MI_ClearTags"
+
 #endif
