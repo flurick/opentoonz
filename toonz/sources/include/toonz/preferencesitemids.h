@@ -121,6 +121,8 @@ enum PreferencesItemId {
   xsheetStep,
   xsheetAutopanEnabled,
   DragCellsBehaviour,
+  deleteCommandBehavior,
+  pasteCellsBehavior,
   ignoreAlphaonColumn1Enabled,
   showKeyframesOnXsheetCellArea,
   showXsheetCameraColumn,

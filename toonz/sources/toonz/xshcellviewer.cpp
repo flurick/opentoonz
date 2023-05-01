@@ -929,7 +929,8 @@ void RenameCellField::renameCell() {
 
   if (fid.getNumber() == 0 && !hasFrameZero) {
     TCellSelection::Range range = cellSelection->getSelectedCells();
-    cellSelection->deleteCells();
+    // clear cells without shifting
+    cellSelection->deleteCells(false);
     // revert cell selection
     cellSelection->selectCells(range.m_r0, range.m_c0, range.m_r1, range.m_c1);
   } else if (cells.size() == 1)
@@ -3860,7 +3861,12 @@ void CellArea::createCellMenu(QMenu &menu, bool isCellSelected, TXshCell cell,
     QMenu *pasteSpecialMenu = new QMenu(tr("Paste Special"), this);
     {
       pasteSpecialMenu->addAction(cmdManager->getAction(MI_PasteInto));
-      pasteSpecialMenu->addAction(cmdManager->getAction(MI_PasteNumbers));
+      // the "standard" paste behavior for MI_Paste is specified in the
+      // preferences. here we display the alternative behavior.
+      if (Preferences::instance()->getPasteCellsBehavior() == 0)
+        pasteSpecialMenu->addAction(cmdManager->getAction(MI_PasteNumbers));
+      else
+        pasteSpecialMenu->addAction(cmdManager->getAction(MI_PasteCellContent));
       if (!soundTextCellsSelected) {
         pasteSpecialMenu->addAction(cmdManager->getAction(MI_PasteDuplicate));
       }
@@ -4096,8 +4102,8 @@ void CellArea::createKeyLineMenu(QMenu &menu, int row, int col) {
   QActionGroup *actionGroup = new QActionGroup(this);
   int i;
   for (i = 1; i <= 4; i++) {
-    QAction *act = new QAction(
-        QString("Interpolation on ") + QString::number(i) + "'s", this);
+    QAction *act =
+        new QAction(tr("Interpolation on %1's").arg(QString::number(i)), this);
     // if (paramStep == i) act->setEnabled(false);
     QList<QVariant> list;
     list.append(QVariant(i));

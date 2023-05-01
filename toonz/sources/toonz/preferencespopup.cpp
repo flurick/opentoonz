@@ -579,6 +579,10 @@ void PreferencesPopup::onPixelsOnlyChanged() {
 
 //-----------------------------------------------------------------------------
 
+void PreferencesPopup::beforeUnitChanged() { m_pref->storeOldUnits(); }
+
+//-----------------------------------------------------------------------------
+
 void PreferencesPopup::onUnitChanged() {
   CheckBox* pixelsOnlyCB = getUI<CheckBox*>(pixelsOnly);
   if (!pixelsOnlyCB->isChecked() &&
@@ -1259,6 +1263,8 @@ QString PreferencesPopup::getUIString(PreferencesItemId id) {
       {xsheetStep, tr("Next/Previous Step Frames:")},
       {xsheetAutopanEnabled, tr("Xsheet Autopan during Playback")},
       {DragCellsBehaviour, tr("Cell-dragging Behaviour:")},
+      {deleteCommandBehavior, tr("Delete Command Behaviour:")},
+      {pasteCellsBehavior, tr("Paste Cells Behaviour:")},
       {ignoreAlphaonColumn1Enabled,
        tr("Ignore Alpha Channel on Levels in Column 1")},
       {showKeyframesOnXsheetCellArea, tr("Show Keyframes on Cell Area")},
@@ -1427,6 +1433,12 @@ QList<ComboBoxItem> PreferencesPopup::getComboItemList(
          Preferences::ShowLevelNameOnColumnHeader}}},
       {DragCellsBehaviour,
        {{tr("Cells Only"), 0}, {tr("Cells and Column Data"), 1}}},
+      {deleteCommandBehavior,
+       {{tr("Clear Cell / Frame"), 0},
+        {tr("Remove and Shift Cells / Frames Up"), 1}}},
+      {pasteCellsBehavior,
+       {{tr("Insert Paste Whole Data"), 0},
+        {tr("Overwrite Paste Cell Numbers"), 1}}},
       {keyframeType,  // note that the value starts from 1, not 0
        {{tr("Constant"), 1},
         {tr("Linear"), 2},
@@ -1697,7 +1709,9 @@ QWidget* PreferencesPopup::createInterfacePage() {
                            &PreferencesPopup::onStyleSheetTypeChanged);
   m_onEditedFuncMap.insert(iconTheme, &PreferencesPopup::onIconThemeChanged);
   m_onEditedFuncMap.insert(pixelsOnly, &PreferencesPopup::onPixelsOnlyChanged);
+  m_preEditedFuncMap.insert(linearUnits, &PreferencesPopup::beforeUnitChanged);
   m_onEditedFuncMap.insert(linearUnits, &PreferencesPopup::onUnitChanged);
+  m_preEditedFuncMap.insert(cameraUnits, &PreferencesPopup::beforeUnitChanged);
   m_onEditedFuncMap.insert(cameraUnits, &PreferencesPopup::onUnitChanged);
   m_preEditedFuncMap.insert(CurrentRoomChoice,
                             &PreferencesPopup::beforeRoomChoiceChanged);
@@ -1987,6 +2001,8 @@ QWidget* PreferencesPopup::createXsheetPage() {
   insertUI(xsheetStep, lay);
   insertUI(xsheetAutopanEnabled, lay);
   insertUI(DragCellsBehaviour, lay, getComboItemList(DragCellsBehaviour));
+  insertUI(deleteCommandBehavior, lay, getComboItemList(deleteCommandBehavior));
+  insertUI(pasteCellsBehavior, lay, getComboItemList(pasteCellsBehavior));
   insertUI(ignoreAlphaonColumn1Enabled, lay);
   QGridLayout* showKeyLay =
       insertGroupBoxUI(showKeyframesOnXsheetCellArea, lay);
