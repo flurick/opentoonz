@@ -55,6 +55,8 @@
 #define MI_FreezePreview "MI_FrezzePreview"
 #define MI_SavePreviewedFrames "MI_SavePreviewedFrames"
 // #define MI_SavePreview         "MI_SavePreview"
+#define MI_ToggleViewerPreview "MI_ToggleViewerPreview"
+#define MI_ToggleViewerSubCameraPreview "MI_ToggleViewerSubCameraPreview"
 #define MI_Print "MI_Print"
 #define MI_Preferences "MI_Preferences"
 #define MI_SavePreset "MI_SavePreset"
@@ -468,6 +470,7 @@
 #define MI_ExportOCA "MI_ExportOCA"
 #define MI_ExportTvpJson "MI_ExportTvpJson"
 #define MI_ExportXsheetPDF "MI_ExportXsheetPDF"
+#define MI_ExportCameraTrack "MI_ExportCameraTrack"
 
 // mark id is added for each actual command (i.g. MI_SetCellMark1)
 #define MI_SetCellMark "MI_SetCellMark"

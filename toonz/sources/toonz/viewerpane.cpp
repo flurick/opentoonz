@@ -45,6 +45,8 @@
 #include "xsheetdragtool.h"
 #include "ruler.h"
 #include "menubarcommandids.h"
+#include "tenv.h"
+#include "cellselection.h"
 
 // Qt includes
 #include <QPainter>
@@ -66,6 +68,17 @@
 #include "viewerpane.h"
 
 using namespace DVGui;
+
+extern TEnv::IntVar EnvViewerPreviewBehavior;
+
+// this enum is to keep comaptibility with older versions
+enum OldV_Parts {
+  OldVPARTS_None        = 0,
+  OldVPARTS_PLAYBAR     = 0x1,
+  OldVPARTS_FRAMESLIDER = 0x4,
+  OldVPARTS_End         = 0x8,
+  OldVPARTS_ALL         = OldVPARTS_PLAYBAR | OldVPARTS_FRAMESLIDER
+};
 
 //=============================================================================
 //
@@ -138,7 +151,7 @@ BaseViewerPanel::BaseViewerPanel(QWidget *parent, Qt::WindowFlags flags)
                      this, SLOT(onButtonPressed(FlipConsole::EGadget)));
 
   ret = ret && connect(m_sceneViewer, SIGNAL(previewStatusChanged()), this,
-                       SLOT(update()));
+                       SLOT(onPreviewStatusChanged()));
   ret = ret && connect(m_sceneViewer, SIGNAL(onFlipHChanged(bool)), this,
                        SLOT(setFlipHButtonChecked(bool)));
   ret = ret && connect(m_sceneViewer, SIGNAL(onFlipVChanged(bool)), this,
@@ -146,6 +159,9 @@ BaseViewerPanel::BaseViewerPanel(QWidget *parent, Qt::WindowFlags flags)
 
   ret = ret && connect(app->getCurrentScene(), SIGNAL(sceneSwitched()), this,
                        SLOT(onSceneSwitched()));
+
+  ret = ret && connect(app, SIGNAL(activeViewerChanged()), this,
+                       SLOT(onActiveViewerChanged()));
 
   assert(ret);
 
@@ -256,7 +272,7 @@ void BaseViewerPanel::onDrawFrame(int frame,
   }
 
   // assert(frame >= 0); // frame can be negative in rare cases
-  if (frame != frameHandle->getFrameIndex() + 1) {
+  if (frame != frameHandle->getFrameIndex() + 1 && !settings.m_drawBlankFrame) {
     int oldFrame = frameHandle->getFrame();
     frameHandle->setCurrentFrame(frame);
     if (!frameHandle->isPlaying() && !frameHandle->isEditingLevel() &&
@@ -429,30 +445,51 @@ void BaseViewerPanel::initializeTitleBar(TPanelTitleBar *titleBar) {
                        SLOT(freeze(bool)));
 
   // preview toggles
-  m_previewButton = new TPanelTitleBarButton(
+  m_previewButton = new TPanelTitleBarButtonForPreview(
       titleBar, getIconThemePath("actions/20/pane_preview.svg"));
   x += 10 + iconWidth;
   titleBar->add(QPoint(x, 0), m_previewButton);
   m_previewButton->setToolTip(tr("Preview"));
-  ret = ret && connect(m_previewButton, SIGNAL(toggled(bool)),
-                       SLOT(enableFullPreview(bool)));
 
-  m_subcameraPreviewButton = new TPanelTitleBarButton(
+  // ret = ret && connect(m_previewButton, SIGNAL(toggled(bool)),
+  //                      SLOT(enableFullPreview(bool)));
+
+  m_subcameraPreviewButton = new TPanelTitleBarButtonForPreview(
       titleBar, getIconThemePath("actions/20/pane_subpreview.svg"));
   x += 1 + 24;  // width of pane_preview.svg = 24px
 
   titleBar->add(QPoint(x, 0), m_subcameraPreviewButton);
   m_subcameraPreviewButton->setToolTip(tr("Sub-camera Preview"));
-  ret = ret && connect(m_subcameraPreviewButton, SIGNAL(toggled(bool)),
-                       SLOT(enableSubCameraPreview(bool)));
+
+  // ret = ret && connect(m_subcameraPreviewButton, SIGNAL(toggled(bool)),
+  //                      SLOT(enableSubCameraPreview(bool)));
 
   assert(ret);
 }
 
 //-----------------------------------------------------------------------------
 
+void BaseViewerPanel::getPreviewButtonStates(bool &prev, bool &subCamPrev) {
+  prev       = m_previewButton->isChecked();
+  subCamPrev = m_subcameraPreviewButton->isChecked();
+}
+
+//-----------------------------------------------------------------------------
+
 void BaseViewerPanel::enableFullPreview(bool enabled) {
   m_subcameraPreviewButton->setPressed(false);
+  if (CommandManager::instance()
+          ->getAction(MI_ToggleViewerSubCameraPreview)
+          ->isChecked())
+    CommandManager::instance()
+        ->getAction(MI_ToggleViewerSubCameraPreview)
+        ->setChecked(false);
+
+  if (!enabled && EnvViewerPreviewBehavior == 2 &&
+      FlipConsole::getCurrent() == m_flipConsole &&
+      TApp::instance()->getCurrentFrame()->isPlaying())
+    CommandManager::instance()->execute(MI_Pause);
+
   m_sceneViewer->enablePreview(enabled ? SceneViewer::FULL_PREVIEW
                                        : SceneViewer::NO_PREVIEW);
   m_flipConsole->setProgressBarStatus(
@@ -464,6 +501,18 @@ void BaseViewerPanel::enableFullPreview(bool enabled) {
 
 void BaseViewerPanel::enableSubCameraPreview(bool enabled) {
   m_previewButton->setPressed(false);
+  if (CommandManager::instance()
+          ->getAction(MI_ToggleViewerPreview)
+          ->isChecked())
+    CommandManager::instance()
+        ->getAction(MI_ToggleViewerPreview)
+        ->setChecked(false);
+
+  if (!enabled && EnvViewerPreviewBehavior == 2 &&
+      FlipConsole::getCurrent() == m_flipConsole &&
+      TApp::instance()->getCurrentFrame()->isPlaying())
+    CommandManager::instance()->execute(MI_Pause);
+
   m_sceneViewer->enablePreview(enabled ? SceneViewer::SUBCAMERA_PREVIEW
                                        : SceneViewer::NO_PREVIEW);
   m_flipConsole->setProgressBarStatus(
@@ -509,6 +558,26 @@ void BaseViewerPanel::onPlayingStatusChanged(bool playing) {
     m_playing = false;
     m_first   = true;
   }
+
+  // if preview behavior mode is "selected cells", release preview mode when
+  // stopped
+  if (!playing && EnvViewerPreviewBehavior == 2 &&
+      FlipConsole::getCurrent() == m_flipConsole &&
+      !Previewer::instance(m_sceneViewer->getPreviewMode() ==
+                           SceneViewer::SUBCAMERA_PREVIEW)
+           ->isBusy()) {
+    if (CommandManager::instance()
+            ->getAction(MI_ToggleViewerPreview)
+            ->isChecked())
+      CommandManager::instance()->getAction(MI_ToggleViewerPreview)->trigger();
+    else if (CommandManager::instance()
+                 ->getAction(MI_ToggleViewerSubCameraPreview)
+                 ->isChecked())
+      CommandManager::instance()
+          ->getAction(MI_ToggleViewerSubCameraPreview)
+          ->trigger();
+  }
+
   if (Preferences::instance()->getOnionSkinDuringPlayback()) return;
   OnionSkinMask osm =
       TApp::instance()->getCurrentOnionSkin()->getOnionSkinMask();
@@ -800,6 +869,90 @@ void BaseViewerPanel::load(QSettings &settings) {
   updateShowHide();
 }
 
+//-----------------------------------------------------------------------------
+
+void BaseViewerPanel::onPreviewStatusChanged() {
+  // if preview behavior mode is "selected cells", play once the all frames are
+  // completed
+  if (EnvViewerPreviewBehavior == 2 &&
+      FlipConsole::getCurrent() == m_flipConsole &&
+      !TApp::instance()->getCurrentFrame()->isPlaying() &&
+      m_sceneViewer->isPreviewEnabled() &&
+      !Previewer::instance(m_sceneViewer->getPreviewMode() ==
+                           SceneViewer::SUBCAMERA_PREVIEW)
+           ->isBusy()) {
+    TCellSelection *cellSel =
+        dynamic_cast<TCellSelection *>(TSelection::getCurrent());
+    if (cellSel && !cellSel->isEmpty()) {
+      int r0, c0, r1, c1;
+      cellSel->getSelectedCells(r0, c0, r1, c1);
+      if (r0 < r1) {
+        // check if all frame range is rendered. this check is needed since
+        // isBusy() will not be true just after the preview is triggered
+        for (int r = r0; r <= r1; r++) {
+          if (!Previewer::instance(m_sceneViewer->getPreviewMode() ==
+                                   SceneViewer::SUBCAMERA_PREVIEW)
+                   ->isFrameReady(r)) {
+            update();
+            return;
+          }
+        }
+        m_flipConsole->setStopAt(r1 + 1);
+        m_flipConsole->setStartAt(r0 + 1);
+        TApp::instance()->getCurrentFrame()->setFrame(r0);
+        CommandManager::instance()->execute(MI_Loop);
+      }
+    }
+  }
+
+  update();
+}
+
+//-----------------------------------------------------------------------------
+// sync preview commands and buttons states when the viewer becomes active
+
+void BaseViewerPanel::onActiveViewerChanged() {
+  bool ret = true;
+  if (TApp::instance()->getActiveViewer() == m_sceneViewer) {
+    ret = ret &&
+          connect(m_previewButton, SIGNAL(toggled(bool)),
+                  CommandManager::instance()->getAction(MI_ToggleViewerPreview),
+                  SLOT(trigger()));
+    ret = ret &&
+          connect(CommandManager::instance()->getAction(MI_ToggleViewerPreview),
+                  SIGNAL(triggered(bool)), m_previewButton,
+                  SLOT(setPressed(bool)));
+    ret        = ret && connect(m_subcameraPreviewButton, SIGNAL(toggled(bool)),
+                                CommandManager::instance()->getAction(
+                             MI_ToggleViewerSubCameraPreview),
+                                SLOT(trigger()));
+    ret        = ret && connect(CommandManager::instance()->getAction(
+                             MI_ToggleViewerSubCameraPreview),
+                                SIGNAL(triggered(bool)), m_subcameraPreviewButton,
+                                SLOT(setPressed(bool)));
+    m_isActive = true;
+  } else if (m_isActive) {
+    ret = ret && disconnect(m_previewButton, SIGNAL(toggled(bool)),
+                            CommandManager::instance()->getAction(
+                                MI_ToggleViewerPreview),
+                            SLOT(trigger()));
+    ret = ret &&
+          disconnect(
+              CommandManager::instance()->getAction(MI_ToggleViewerPreview),
+              SIGNAL(triggered(bool)), m_previewButton, SLOT(setPressed(bool)));
+    ret = ret && disconnect(m_subcameraPreviewButton, SIGNAL(toggled(bool)),
+                            CommandManager::instance()->getAction(
+                                MI_ToggleViewerSubCameraPreview),
+                            SLOT(trigger()));
+    ret = ret && disconnect(CommandManager::instance()->getAction(
+                                MI_ToggleViewerSubCameraPreview),
+                            SIGNAL(triggered(bool)), m_subcameraPreviewButton,
+                            SLOT(setPressed(bool)));
+    m_isActive = false;
+  }
+  assert(ret);
+}
+
 //=============================================================================
 //
 // SceneViewerPanel
@@ -837,9 +990,55 @@ SceneViewerPanel::SceneViewerPanel(QWidget *parent, Qt::WindowFlags flags)
 //-----------------------------------------------------------------------------
 
 void SceneViewerPanel::checkOldVersionVisblePartsFlags(QSettings &settings) {
-  if (!settings.contains("visibleParts")) return;
-  m_visiblePartsFlag =
-      settings.value("visibleParts", m_visiblePartsFlag).toUInt();
-  settings.remove("visibleParts");
-  settings.setValue("viewerVisibleParts", m_visiblePartsFlag);
+  if (settings.contains("viewerVisibleParts") ||
+      !settings.contains("visibleParts"))
+    return;
+  UINT oldVisiblePartsFlag =
+      settings.value("visibleParts", OldVPARTS_ALL).toUInt();
+  m_visiblePartsFlag = VPPARTS_None;
+  if (oldVisiblePartsFlag & OldVPARTS_PLAYBAR)
+    m_visiblePartsFlag |= VPPARTS_PLAYBAR;
+  if (oldVisiblePartsFlag & OldVPARTS_FRAMESLIDER)
+    m_visiblePartsFlag |= VPPARTS_FRAMESLIDER;
 }
+
+//=========================================================
+
+class ViewerPreviewCommands : public QObject {
+public:
+  ViewerPreviewCommands() {
+    setCommandHandler("MI_ToggleViewerPreview", this,
+                      &ViewerPreviewCommands::onPreview);
+    setCommandHandler("MI_ToggleViewerSubCameraPreview", this,
+                      &ViewerPreviewCommands::onSubCameraPreview);
+  }
+
+  void onPreview();
+  void onSubCameraPreview();
+};
+
+void ViewerPreviewCommands::onPreview() {
+  SceneViewer *activeViewer = TApp::instance()->getActiveViewer();
+  if (!activeViewer) return;
+  BaseViewerPanel *bvp = qobject_cast<BaseViewerPanel *>(
+      activeViewer->parentWidget()->parentWidget());
+  if (!bvp) return;
+  bool on = CommandManager::instance()
+                ->getAction(MI_ToggleViewerPreview)
+                ->isChecked();
+  bvp->enableFullPreview(on);
+}
+
+void ViewerPreviewCommands::onSubCameraPreview() {
+  SceneViewer *activeViewer = TApp::instance()->getActiveViewer();
+  if (!activeViewer) return;
+  BaseViewerPanel *bvp = qobject_cast<BaseViewerPanel *>(
+      activeViewer->parentWidget()->parentWidget());
+  if (!bvp) return;
+  bool on = CommandManager::instance()
+                ->getAction(MI_ToggleViewerSubCameraPreview)
+                ->isChecked();
+  bvp->enableSubCameraPreview(on);
+}
+
+ViewerPreviewCommands viewerPreviewCommands;

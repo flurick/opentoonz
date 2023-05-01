@@ -579,6 +579,10 @@ void PreferencesPopup::onPixelsOnlyChanged() {
 
 //-----------------------------------------------------------------------------
 
+void PreferencesPopup::beforeUnitChanged() { m_pref->storeOldUnits(); }
+
+//-----------------------------------------------------------------------------
+
 void PreferencesPopup::onUnitChanged() {
   CheckBox* pixelsOnlyCB = getUI<CheckBox*>(pixelsOnly);
   if (!pixelsOnlyCB->isChecked() &&
@@ -1197,7 +1201,7 @@ QString PreferencesPopup::getUIString(PreferencesItemId id) {
       {removeSceneNumberFromLoadedLevelName,
        tr("Automatically Remove Scene Number from Loaded Level Name")},
       {IgnoreImageDpi, tr("Use Camera DPI for All Imported Images")},
-      {initialLoadTlvCachingBehavior, tr("Default TLV Caching Behavior:")},
+      {rasterLevelCachingBehavior, tr("Raster Level Caching Behavior:")},
       {columnIconLoadingPolicy, tr("Column Icon:")},
       //{ levelFormats,                           tr("") },
 
@@ -1259,6 +1263,8 @@ QString PreferencesPopup::getUIString(PreferencesItemId id) {
       {xsheetStep, tr("Next/Previous Step Frames:")},
       {xsheetAutopanEnabled, tr("Xsheet Autopan during Playback")},
       {DragCellsBehaviour, tr("Cell-dragging Behaviour:")},
+      {deleteCommandBehavior, tr("Delete Command Behaviour:")},
+      {pasteCellsBehavior, tr("Paste Cells Behaviour:")},
       {ignoreAlphaonColumn1Enabled,
        tr("Ignore Alpha Channel on Levels in Column 1")},
       {showKeyframesOnXsheetCellArea, tr("Show Keyframes on Cell Area")},
@@ -1375,7 +1381,7 @@ QList<ComboBoxItem> PreferencesPopup::getComboItemList(
        {{tr("Always ask before loading or importing"), 0},
         {tr("Always import the file to the current project"), 1},
         {tr("Always load the file from the current location"), 2}}},
-      {initialLoadTlvCachingBehavior,
+      {rasterLevelCachingBehavior,
        {{tr("On Demand"), 0},
         {tr("All Icons"), 1},
         {tr("All Icons & Images"), 2}}},
@@ -1427,6 +1433,12 @@ QList<ComboBoxItem> PreferencesPopup::getComboItemList(
          Preferences::ShowLevelNameOnColumnHeader}}},
       {DragCellsBehaviour,
        {{tr("Cells Only"), 0}, {tr("Cells and Column Data"), 1}}},
+      {deleteCommandBehavior,
+       {{tr("Clear Cell / Frame"), 0},
+        {tr("Remove and Shift Cells / Frames Up"), 1}}},
+      {pasteCellsBehavior,
+       {{tr("Insert Paste Whole Data"), 0},
+        {tr("Overwrite Paste Cell Numbers"), 1}}},
       {keyframeType,  // note that the value starts from 1, not 0
        {{tr("Constant"), 1},
         {tr("Linear"), 2},
@@ -1697,7 +1709,9 @@ QWidget* PreferencesPopup::createInterfacePage() {
                            &PreferencesPopup::onStyleSheetTypeChanged);
   m_onEditedFuncMap.insert(iconTheme, &PreferencesPopup::onIconThemeChanged);
   m_onEditedFuncMap.insert(pixelsOnly, &PreferencesPopup::onPixelsOnlyChanged);
+  m_preEditedFuncMap.insert(linearUnits, &PreferencesPopup::beforeUnitChanged);
   m_onEditedFuncMap.insert(linearUnits, &PreferencesPopup::onUnitChanged);
+  m_preEditedFuncMap.insert(cameraUnits, &PreferencesPopup::beforeUnitChanged);
   m_onEditedFuncMap.insert(cameraUnits, &PreferencesPopup::onUnitChanged);
   m_preEditedFuncMap.insert(CurrentRoomChoice,
                             &PreferencesPopup::beforeRoomChoiceChanged);
@@ -1745,8 +1759,8 @@ QWidget* PreferencesPopup::createLoadingPage() {
   insertUI(subsceneFolderEnabled, lay);
   insertUI(removeSceneNumberFromLoadedLevelName, lay);
   insertUI(IgnoreImageDpi, lay);
-  insertUI(initialLoadTlvCachingBehavior, lay,
-           getComboItemList(initialLoadTlvCachingBehavior));
+  insertUI(rasterLevelCachingBehavior, lay,
+           getComboItemList(rasterLevelCachingBehavior));
   insertUI(columnIconLoadingPolicy, lay,
            getComboItemList(columnIconLoadingPolicy));
 
@@ -1987,6 +2001,8 @@ QWidget* PreferencesPopup::createXsheetPage() {
   insertUI(xsheetStep, lay);
   insertUI(xsheetAutopanEnabled, lay);
   insertUI(DragCellsBehaviour, lay, getComboItemList(DragCellsBehaviour));
+  insertUI(deleteCommandBehavior, lay, getComboItemList(deleteCommandBehavior));
+  insertUI(pasteCellsBehavior, lay, getComboItemList(pasteCellsBehavior));
   insertUI(ignoreAlphaonColumn1Enabled, lay);
   QGridLayout* showKeyLay =
       insertGroupBoxUI(showKeyframesOnXsheetCellArea, lay);

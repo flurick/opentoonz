@@ -188,8 +188,12 @@ elseif(BUILD_ENV_APPLE)
 elseif(BUILD_ENV_UNIXLIKE)
     # Needed for correct Qt detection
     cmake_minimum_required(VERSION 2.8.12)
+    set(PRELOAD_VARIABLE "LD_LIBRARY_PATH")
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         add_definitions(-DLINUX)
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Haiku")
+        add_definitions(-DHAIKU)
+        set(PRELOAD_VARIABLE "LIBRARY_PATH")
     elseif(CMAKE_SYSTEM_NAME MATCHES "^.*BSD$|DragonFly")
         set(BUILD_TARGET_BSD ON)
         add_definitions(-D_BSD_SOURCE -DFREEBSD)
@@ -472,6 +476,9 @@ elseif(BUILD_ENV_UNIXLIKE)
     find_package(LZO REQUIRED)
     message("LZO:" ${LZO_INCLUDE_DIR})
 
+    if(HAIKU)
+        find_library(EXECINFO_LIBRARY execinfo)
+    endif()
     find_library(PTHREAD_LIBRARY pthread)
 
     if(NOT BUILD_TARGET_WIN)
@@ -555,6 +562,9 @@ if(BUILD_ENV_MSVC)
     # place Toonz.exe and dlls in the same directory
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    # use secure functions by defaualt
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1")
 elseif(BUILD_ENV_APPLE)
     # pass
 elseif(BUILD_ENV_UNIXLIKE)

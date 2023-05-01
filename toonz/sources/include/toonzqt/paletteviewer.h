@@ -139,6 +139,7 @@ protected:
   QAction *m_visibleNewAction;
   QAction *m_visibleGizmoAction;
   QAction *m_visibleNameAction;
+  QAction *m_variableWidthAction;
 
 protected:
   void createTabBar();
@@ -208,6 +209,8 @@ protected slots:
   void toggleNewStylePageVisibility(bool);
   void togglePaletteGizmoVisibility(bool);
   void toggleNameEditorVisibility(bool);
+
+  void toggleVariableWidth(bool);
 };
 
 #endif  // PALETTEVIEWER_H

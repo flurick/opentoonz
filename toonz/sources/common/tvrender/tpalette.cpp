@@ -90,10 +90,18 @@ std::string fidsToString(const std::vector<TFrameId> &fids) {
 // convert loaded string to refLevelFids
 std::vector<TFrameId> strToFids(std::string fidsStr) {
   std::vector<TFrameId> ret;
-  QString str        = QString::fromStdString(fidsStr);
+  QString str = QString::fromStdString(fidsStr);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+  QStringList chunks = str.split(',', Qt::SkipEmptyParts);
+#else
   QStringList chunks = str.split(',', QString::SkipEmptyParts);
+#endif
   for (const auto &chunk : chunks) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+    QStringList nums = chunk.split('-', Qt::SkipEmptyParts);
+#else
     QStringList nums = chunk.split('-', QString::SkipEmptyParts);
+#endif
     assert(nums.count() > 0 && nums.count() <= 2);
     if (nums.count() == 1)
       ret.push_back(TFrameId(nums[0].toInt()));
@@ -896,7 +904,7 @@ void TPalette::loadData(TIStream &is) {
  * original names.
  */
 void TPalette::assign(const TPalette *src, bool isFromStudioPalette) {
-  if (src == this) return;
+  if (!src || src == this) return;
   int i;
   m_isCleanupPalette = src->isCleanupPalette();
   // for(i=0;i<getStyleCount();i++) delete getStyle(i);

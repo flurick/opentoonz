@@ -362,13 +362,8 @@ void Room::load(const TFilePath &fp) {
 // MainWindow
 //-----------------------------------------------------------------------------
 
-#if QT_VERSION >= 0x050500
 MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent,
                        Qt::WindowFlags flags)
-#else
-MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent,
-                       Qt::WFlags flags)
-#endif
     : QMainWindow(parent, flags)
     , m_saveSettingsOnQuit(true)
     , m_oldRoomIndex(0)
@@ -467,6 +462,9 @@ centralWidget->setLayout(centralWidgetLayout);*/
   if (TSystem::doesExistFileOrLevel(TFilePath(ffmpegCachePath))) {
     TSystem::rmDirTree(TFilePath(ffmpegCachePath));
   }
+
+  connect(TApp::instance(), SIGNAL(activeViewerChanged()), this,
+          SLOT(onActiveViewerChanged()));
 }
 
 //-----------------------------------------------------------------------------
@@ -1319,6 +1317,27 @@ void MainWindow::onUpdateCheckerDone(bool error) {
   disconnect(m_updateChecker);
   m_updateChecker->deleteLater();
 }
+
+//-----------------------------------------------------------------------------
+
+void MainWindow::onActiveViewerChanged() {
+  // sync the command state to the button state of the activated viewer
+  SceneViewer *activeViewer = TApp::instance()->getActiveViewer();
+  if (!activeViewer) return;
+  BaseViewerPanel *bvp = qobject_cast<BaseViewerPanel *>(
+      activeViewer->parentWidget()->parentWidget());
+  if (!bvp) return;
+  bool prev, subCamPrev;
+  bvp->getPreviewButtonStates(prev, subCamPrev);
+
+  CommandManager::instance()
+      ->getAction(MI_ToggleViewerPreview)
+      ->setChecked(prev);
+  CommandManager::instance()
+      ->getAction(MI_ToggleViewerSubCameraPreview)
+      ->setChecked(subCamPrev);
+}
+
 //-----------------------------------------------------------------------------
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -1373,6 +1392,14 @@ QAction *MainWindow::createAction(const char *id, const char *name,
                                   const QString &defaultShortcut,
                                   CommandType type, const char *iconSVGName) {
   QAction *action = new DVAction(tr(name), this);
+
+  // For "edit" category menu commands may behave various function
+  // according to the current selection.
+  // Now the command name can be adjusted on switching the selection.
+  // Here we explicitly register the default text in order to recover the
+  // command name if the selection does not specify the alternative command
+  // name.
+  if (type == MenuEditCommandType) action->setIconText(tr(name));
 
 #if !defined(_WIN32)
   bool visible = Preferences::instance()->getBoolValue(showIconsInMenu);
@@ -1733,6 +1760,8 @@ void MainWindow::defineActions() {
                        "", "clear_cache");
   createMenuFileAction(MI_ExportCurrentScene,
                        QT_TR_NOOP("&Export Current Scene"), "");
+  createMenuFileAction(MI_ExportCameraTrack, QT_TR_NOOP("&Export Camera Track"),
+                       "");
 
   // Menu - Edit
 
@@ -2056,6 +2085,12 @@ void MainWindow::defineActions() {
   createMenuRenderAction(MI_SavePreviewedFrames,
                          QT_TR_NOOP("&Save Previewed Frames"), "",
                          "save_previewed_frames");
+  createToggle(MI_ToggleViewerPreview, QT_TR_NOOP("Toggle Viewer Preview"), "",
+               false, MenuRenderCommandType, "pane_preview");
+  createToggle(MI_ToggleViewerSubCameraPreview,
+               QT_TR_NOOP("Toggle Viewer Sub-camera Preview"), "", false,
+               MenuRenderCommandType, "pane_subpreview");
+
   createRightClickMenuAction(MI_OpenPltGizmo, QT_TR_NOOP("&Palette Gizmo"), "",
                              "palettegizmo");
   createRightClickMenuAction(MI_EraseUnusedStyles,
@@ -2272,6 +2307,8 @@ void MainWindow::defineActions() {
                              "", "shift_keys_up");
   createRightClickMenuAction(MI_PasteNumbers, QT_TR_NOOP("&Paste Numbers"), "",
                              "paste_numbers");
+  createRightClickMenuAction(MI_PasteCellContent,
+                             QT_TR_NOOP("&Paste Cell Content"), "", "paste");
 
   createRightClickMenuAction(MI_Histogram, QT_TR_NOOP("&Histogram"), "");
   // MI_ViewerHistogram command is used as a proxy. It will be called when
@@ -2823,7 +2860,7 @@ void MainWindow::defineActions() {
   createToolOptionsAction("A_ToolOption_RotateRight",
                           QT_TR_NOOP("Rotate Selection/Object Right"), "");
 
-// Visualization
+  // Visualization
 
   createViewerAction(V_ZoomIn, QT_TR_NOOP("Zoom In"), "+");
   createViewerAction(V_ZoomOut, QT_TR_NOOP("Zoom Out"), "-");
