@@ -40,13 +40,16 @@ public:
   ~TCellSelection();
 
   void enableCommands() override;
+  void setAlternativeCommandNames();
 
   bool isEmpty() const override;
 
   void copyCells();
   void pasteCells();
+  void doPaste();  // choose pasting behavior by preference option
   void pasteDuplicateCells();
   void deleteCells();
+  void deleteCells(bool withShift);
   void cutCells();
   void cutCells(bool withoutCopy);
 
