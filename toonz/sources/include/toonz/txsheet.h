@@ -53,6 +53,7 @@ class TFrameId;
 class Orientation;
 class TXsheetColumnChangeObserver;
 class ExpressionReferenceMonitor;
+class NavigationTags;
 
 //=============================================================================
 
@@ -158,6 +159,7 @@ private:
   std::unique_ptr<TXsheetImp> m_imp;
   TXshNoteSet *m_notes;
   SoundProperties *m_soundProperties;
+  NavigationTags *m_navigationTags;
 
   int m_cameraColumnIndex;
   TXshColumn *m_cameraColumn;
@@ -427,8 +429,8 @@ frame duplication.
 
   // force cells order in n-steps. returns the row amount after process
   // if withBlank is greater than -1, remove empty cell from its order and
-  // insert blank frames with type*withBlank length at each n-step.
-  int reframeCells(int r0, int r1, int col, int type, int withBlank = -1);
+  // insert blank frames with step*withBlank length at each n-step.
+  int reframeCells(int r0, int r1, int col, int step, int withBlank = -1);
 
   /*! Exposes level \b \e xl in xsheet starting from cell identified by \b \e
      row and \b \e col.
@@ -579,6 +581,10 @@ in TXsheetImp.
   void notifyFxAdded(const std::vector<TFx *> &fxs);
   void notifyStageObjectAdded(const TStageObjectId id);
   bool isReferenceManagementIgnored(TDoubleParam *);
+
+  NavigationTags *getNavigationTags() const { return m_navigationTags; }
+  bool isFrameTagged(int frame) const;
+  void toggleTaggedFrame(int frame);
 
 protected:
   bool checkCircularReferences(TXsheet *childCandidate);

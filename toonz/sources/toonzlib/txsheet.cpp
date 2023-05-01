@@ -33,6 +33,7 @@
 #include "xshhandlemanager.h"
 #include "orientation.h"
 #include "toonz/expressionreferencemonitor.h"
+#include "toonz/navigationtags.h"
 
 #include "toonz/txsheet.h"
 #include "toonz/preferences.h"
@@ -197,7 +198,8 @@ TXsheet::TXsheet()
     , m_imp(new TXsheet::TXsheetImp)
     , m_notes(new TXshNoteSet())
     , m_cameraColumnIndex(0)
-    , m_observer(nullptr) {
+    , m_observer(nullptr)
+    , m_navigationTags(new NavigationTags()) {
   // extern TSyntax::Grammar *createXsheetGrammar(TXsheet*);
   m_soundProperties      = new TXsheet::SoundProperties();
   m_imp->m_handleManager = new XshHandleManager(this);
@@ -218,6 +220,7 @@ TXsheet::~TXsheet() {
   assert(m_imp);
   if (m_notes) delete m_notes;
   if (m_soundProperties) delete m_soundProperties;
+  if (m_navigationTags) delete m_navigationTags;
 }
 
 //-----------------------------------------------------------------------------
@@ -867,7 +870,7 @@ void TXsheet::eachCells(int r0, int c0, int r1, int c1, int type) {
 //-----------------------------------------------------------------------------
 /*! force cells order in n-steps. returns the row amount after process
  */
-int TXsheet::reframeCells(int r0, int r1, int col, int type, int withBlank) {
+int TXsheet::reframeCells(int r0, int r1, int col, int step, int withBlank) {
   // Row amount in the selection
   int nr = r1 - r0 + 1;
 
@@ -896,10 +899,10 @@ int TXsheet::reframeCells(int r0, int r1, int col, int type, int withBlank) {
   if (cells.empty()) return 0;
 
   // row amount after n-step
-  int nrows = cells.size() * type;
+  int nrows = cells.size() * step;
 
   if (withBlank > 0) {
-    nrows += cells.size() * withBlank * type;
+    nrows += cells.size() * withBlank * step;
   }
 
   // if needed, insert cells
@@ -912,19 +915,19 @@ int TXsheet::reframeCells(int r0, int r1, int col, int type, int withBlank) {
   }
 
   for (int i = r0, k = 0; i < r0 + nrows; k++) {
-    for (int i1 = 0; i1 < type; i1++) {
+    for (int i1 = 0; i1 < step; i1++) {
       if (cells[k].isEmpty())
         clearCells(i + i1, col);
       else
         setCell(i + i1, col, cells[k]);
     }
-    i += type;  // dipende dal tipo di step (2 o 3 per ora)
+    i += step;  // dipende dal tipo di step (2 o 3 per ora)
 
     if (withBlank > 0) {
-      for (int i1 = 0; i1 < withBlank * type; i1++) {
+      for (int i1 = 0; i1 < withBlank * step; i1++) {
         clearCells(i + i1, col);
       }
-      i += withBlank * type;
+      i += withBlank * step;
     }
   }
 
@@ -1264,6 +1267,8 @@ void TXsheet::loadData(TIStream &is) {
       m_imp->copyFoldedState();
     } else if (tagName == "noteSet") {
       m_notes->loadData(is);
+    } else if (tagName == "navigationTags") {
+      m_navigationTags->loadData(is);
     } else {
       throw TException("xsheet, unknown tag: " + tagName);
     }
@@ -1311,6 +1316,13 @@ void TXsheet::saveData(TOStream &os) {
   if (notes->getCount() > 0) {
     os.openChild("noteSet");
     notes->saveData(os);
+    os.closeChild();
+  }
+
+  NavigationTags *navigationTags = getNavigationTags();
+  if (navigationTags->getCount() > 0) {
+    os.openChild("navigationTags");
+    navigationTags->saveData(os);
     os.closeChild();
   }
 }
@@ -1840,3 +1852,20 @@ ExpressionReferenceMonitor *TXsheet::getExpRefMonitor() const {
   return m_imp->m_expRefMonitor;
 }
 //---------------------------------------------------------
+
+bool TXsheet::isFrameTagged(int frame) const {
+  if (frame < 0) return false;
+
+  return m_navigationTags->isTagged(frame);
+}
+
+//---------------------------------------------------------
+
+void TXsheet::toggleTaggedFrame(int frame) {
+  if (frame < 0) return;
+
+  if (isFrameTagged(frame))
+    m_navigationTags->removeTag(frame);
+  else
+    m_navigationTags->addTag(frame);
+}

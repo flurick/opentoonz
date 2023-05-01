@@ -710,6 +710,13 @@ void ToonzVectorBrushTool::leftButtonDown(const TPointD &pos,
     m_currentColor = TPixel32::Red;
     m_active       = true;
   }
+
+  TXshLevel *level = app->getCurrentLevel()->getLevel();
+  if (level == NULL && !m_isPath) {
+    m_active = false;
+    return;
+  }
+
   // assert(0<=m_styleId && m_styleId<2);
   m_track.clear();
   double thickness = (m_pressure.getValue() || m_isPath)
@@ -779,7 +786,39 @@ void ToonzVectorBrushTool::leftButtonDrag(const TPointD &pos,
     invalidateRect +=
         TRectD(m_lastSnapPoint - snapThick, m_lastSnapPoint + snapThick);
 
-  if (e.isShiftPressed()) {
+  if (e.isCtrlPressed()) {
+    TPointD m_firstPoint = m_track.getFirstPoint();
+
+    double denominator = m_lastSnapPoint.x - m_firstPoint.x;
+    if (denominator == 0) denominator = 0.001;
+    double slope = ((m_brushPos.y - m_firstPoint.y) / denominator);
+    double angle = std::atan(slope) * (180 / 3.14159);
+    if (abs(angle) > 67.5)
+      m_lastSnapPoint.x = m_firstPoint.x;
+    else if (abs(angle) < 22.5)
+      m_lastSnapPoint.y = m_firstPoint.y;
+    else {
+      double xDistance = m_lastSnapPoint.x - m_firstPoint.x;
+      double yDistance = m_lastSnapPoint.y - m_firstPoint.y;
+      if (abs(xDistance) > abs(yDistance)) {
+        if (abs(yDistance) == yDistance)
+          m_lastSnapPoint.y = m_firstPoint.y + abs(xDistance);
+        else
+          m_lastSnapPoint.y = m_firstPoint.y - abs(xDistance);
+      } else {
+        if (abs(xDistance) == xDistance)
+          m_lastSnapPoint.x = m_firstPoint.x + abs(yDistance);
+        else
+          m_lastSnapPoint.x = m_firstPoint.x - abs(yDistance);
+      }
+    }
+
+    m_smoothStroke.clearPoints();
+    m_track.add(TThickPoint(m_lastSnapPoint, thickness),
+                getPixelSize() * getPixelSize());
+    m_track.removeMiddlePoints();
+    invalidateRect += m_track.getModifiedRegion();
+  } else if (e.isShiftPressed()) {
     m_smoothStroke.clearPoints();
     m_track.add(TThickPoint(m_brushPos, thickness),
                 getPixelSize() * getPixelSize());
@@ -1058,9 +1097,9 @@ bool ToonzVectorBrushTool::doFrameRangeStrokes(
   assert(m > 0);
 
   if (withUndo) TUndoManager::manager()->beginBlock();
-  int row = getApplication()->getCurrentFrame()->isEditingScene()
-                ? getApplication()->getCurrentFrame()->getFrameIndex()
-                : -1;
+  int row       = getApplication()->getCurrentFrame()->isEditingScene()
+                      ? getApplication()->getCurrentFrame()->getFrameIndex()
+                      : -1;
   TFrameId cFid = getApplication()->getCurrentFrame()->getFid();
   for (int i = 0; i < m; ++i) {
     TFrameId fid = fids[i];
@@ -1168,7 +1207,7 @@ bool ToonzVectorBrushTool::doGuidedAutoInbetween(
       bool frameCreated = m_isFrameCreated;
       m_isFrameCreated  = false;
       touchImage();
-      resultBack        = doFrameRangeStrokes(
+      resultBack = doFrameRangeStrokes(
           oFid, fStroke, cFid, cStroke,
           Preferences::instance()->getGuidedInterpolation(), breakAngles,
           autoGroup, autoFill, false, drawStroke, false);
@@ -1203,7 +1242,7 @@ bool ToonzVectorBrushTool::doGuidedAutoInbetween(
       bool frameCreated = m_isFrameCreated;
       m_isFrameCreated  = false;
       touchImage();
-      resultFront       = doFrameRangeStrokes(
+      resultFront = doFrameRangeStrokes(
           cFid, cStroke, oFid, fStroke,
           Preferences::instance()->getGuidedInterpolation(), breakAngles,
           autoGroup, autoFill, drawFirstStroke, false, false);
@@ -1356,7 +1395,7 @@ void ToonzVectorBrushTool::checkStrokeSnapping(bool beforeMousePress,
       stroke = vi->getStroke(i);
       if (stroke->getNearestW(m_mousePos, outW, distance2) &&
           distance2 < minDistance2) {
-        minDistance2                      = distance2;
+        minDistance2 = distance2;
         beforeMousePress ? m_strokeIndex1 = i : m_strokeIndex2 = i;
         if (areAlmostEqual(outW, 0.0, 1e-3))
           beforeMousePress ? m_w1 = 0.0 : m_w2 = 0.0;
@@ -1367,7 +1406,7 @@ void ToonzVectorBrushTool::checkStrokeSnapping(bool beforeMousePress,
 
         beforeMousePress ? point1 = stroke->getPoint(m_w1)
                          : point1 = stroke->getPoint(m_w2);
-        snapFound                 = true;
+        snapFound = true;
       }
     }
     // compare to first point of current stroke
@@ -1468,8 +1507,8 @@ void ToonzVectorBrushTool::checkGuideSnapping(bool beforeMousePress,
         snapPoint.x = hGuide;
       }
       beforeMousePress ? m_foundFirstSnap = true : m_foundLastSnap = true;
-      beforeMousePress ? m_firstSnapPoint                          = snapPoint
-                       : m_lastSnapPoint                           = snapPoint;
+      beforeMousePress ? m_firstSnapPoint = snapPoint
+                       : m_lastSnapPoint  = snapPoint;
     }
   }
 }

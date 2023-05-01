@@ -1301,6 +1301,13 @@ QProgressBar::chunk {
   border-radius: 2;
 }
 /* -----------------------------------------------------------------------------
+   Custom Panel Widgets
+----------------------------------------------------------------------------- */
+MyScroller {
+  qproperty-ScrollerBorderColor: #747b8c;
+  qproperty-ScrollerBGColor: #2d2f30;
+}
+/* -----------------------------------------------------------------------------
    File Browser
 ----------------------------------------------------------------------------- */
 /* Left Pane
@@ -1544,10 +1551,10 @@ QStatusBar #StatusBarLabel {
   qproperty-BGColor: #414345;
 }
 #StyleChooserPage {
-  qproperty-CommonChipBoxColor: #000000;
+  qproperty-CommonChipBoxColor: black;
   qproperty-PinnedChipBoxColor: #a0a0a0;
   qproperty-SolidChipBoxColor: #e41000;
-  qproperty-SelectedChipBoxColor: #ffffff;
+  qproperty-SelectedChipBoxColor: white;
   qproperty-SelectedChipBox2Color: #c7ca32;
 }
 /* -------------------------------------------------------------------------- */
@@ -2429,13 +2436,13 @@ FunctionTreeView {
   padding-left: 2;
 }
 FunctionPanel {
-  qproperty-BGColor: #3a3b3d;
-  qproperty-ValueLineColor: rgba(0, 0, 0, 0.1);
-  qproperty-FrameLineColor: rgba(0, 0, 0, 0.1);
-  qproperty-OtherCurvesColor: #84888b;
-  qproperty-RulerBackground: #323435;
+  qproperty-BGColor: #353638;
+  qproperty-ValueLineColor: #3f4042;
+  qproperty-FrameLineColor: #484b4d;
+  qproperty-OtherCurvesColor: #7f8386;
+  qproperty-RulerBackground: #2d2f30;
   qproperty-TextColor: #d6d8dd;
-  qproperty-SubColor: #3a3b3d;
+  qproperty-SubColor: #353638;
   qproperty-SelectedColor: #FFA500;
 }
 SpreadsheetViewer {

@@ -69,19 +69,8 @@ class DVAPI TXshColumn : public TColumnHeader, public TPersist {
   UCHAR m_opacity;
 
 public:
-  enum FilterColor {
-    FilterNone = 0,
-    FilterRed,
-    FilterGreen,
-    FilterBlue,
-    FilterDarkYellow,
-    FilterDarkCyan,
-    FilterDarkMagenta,
-    FilterAmount
-  };
-
 private:
-  FilterColor m_filterColorId;
+  int m_colorFilterId;
 
 protected:
   enum {
@@ -114,7 +103,8 @@ Constructs a TXshColumn with default value.
       , m_xsheet(0)
       , m_colorTag(0)
       , m_opacity(255)
-      , m_filterColorId(FilterNone) {}
+      , m_colorFilterId(0)  // None
+  {}
 
   enum ColumnType {
     eLevelType = 0,
@@ -129,6 +119,9 @@ Constructs a TXshColumn with default value.
 
   //! Returns the column type used to store levels of the specified type.
   static ColumnType toColumnType(int levelType);
+
+  //! Returns true if the column can be parent of another.
+  bool canBeParent() const;
 
   //! Creates an empty TXshColumn of the specified column type.
   static TXshColumn *createEmpty(int colType);
@@ -261,12 +254,8 @@ Set column color tag to \b colorTag.
     m_colorTag = colorTag;
   }  // Usato solo in tabkids
 
-  FilterColor getFilterColorId() const { return m_filterColorId; }
-  void setFilterColorId(FilterColor id) { m_filterColorId = id; }
-  TPixel32 getFilterColor();
-  static QPair<QString, TPixel32> getFilterInfo(FilterColor key);
-  static void initColorFilters();
-
+  int getColorFilterId() const { return m_colorFilterId; }
+  void setColorFilterId(int id) { m_colorFilterId = id; }
   void resetColumnProperties();
 };
 

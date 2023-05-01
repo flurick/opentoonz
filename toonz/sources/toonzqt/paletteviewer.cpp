@@ -12,6 +12,7 @@
 #include "toonzqt/styleselection.h"
 #include "toonzqt/stylenameeditor.h"
 #include "palettedata.h"
+#include "docklayout.h"
 
 // TnzLib includes
 #include "toonz/palettecmd.h"
@@ -259,6 +260,16 @@ void PaletteViewer::toggleNameEditorVisibility(bool checked) {
 
 //-----------------------------------------------------------------------------
 
+void PaletteViewer::toggleVariableWidth(bool checked) {
+  DockWidget *dock = dynamic_cast<DockWidget *>(parentWidget());
+  if (dock) {
+    dock->setFixWidthMode(checked ? DockWidget::variable
+                                  : DockWidget::sizeable);
+  }
+}
+
+//-----------------------------------------------------------------------------
+
 void PaletteViewer::save(QSettings &settings) const {
   int toolbarOnTop = m_toolbarOnTop ? 1 : 0;
   settings.setValue("toolbarOnTop", toolbarOnTop);
@@ -268,6 +279,8 @@ void PaletteViewer::save(QSettings &settings) const {
   if (m_visibleGizmoAction->isChecked()) visibleParts |= 0x04;
   if (m_visibleNameAction->isChecked()) visibleParts |= 0x08;
   settings.setValue("toolbarVisibleMsk", visibleParts);
+  int variableWidth = m_variableWidthAction->isChecked() ? 1 : 0;
+  settings.setValue("variableWidth", variableWidth);
 }
 
 void PaletteViewer::load(QSettings &settings) {
@@ -293,6 +306,10 @@ void PaletteViewer::load(QSettings &settings) {
   applyToolbarPartVisibility(TBVisNewStylePage, visibleParts & 0x02);
   applyToolbarPartVisibility(TBVisPaletteGizmo, visibleParts & 0x04);
   applyToolbarPartVisibility(TBVisNameEditor, visibleParts & 0x08);
+
+  bool variableWidth = settings.value("variableWidth", true).toInt() != 0;
+  m_variableWidthAction->setChecked(variableWidth);
+  toggleVariableWidth(variableWidth);
 }
 
 //-----------------------------------------------------------------------------
@@ -507,6 +524,16 @@ void PaletteViewer::createPaletteToolBar() {
 
   viewMode->addSeparator();
 
+  // Docked panels will automatically adjust width based of the window size
+  m_variableWidthAction = new QAction(tr("Auto Adjust Panel Width"));
+  m_variableWidthAction->setCheckable(true);
+  m_variableWidthAction->setChecked(true);
+  viewMode->addAction(m_variableWidthAction);
+  connect(m_variableWidthAction, SIGNAL(toggled(bool)), this,
+          SLOT(toggleVariableWidth(bool)));
+
+  viewMode->addSeparator();
+
   // Add ability to show or hide buttons
   QMenu *visibleButtons = new QMenu(tr("Visible Toolbar Buttons"));
 
@@ -643,13 +670,11 @@ void PaletteViewer::createSavePaletteToolBar() {
   }
 
   // save palette as
-  QIcon saveAsPaletteIcon = createQIcon("saveas");
-  QAction *saveAsPalette  = new QAction(
-       saveAsPaletteIcon, tr("&Save Palette As"), m_savePaletteToolBar);
+  QAction *saveAsPalette = new QAction(
+      createQIcon("saveas"), tr("&Save Palette As"), m_savePaletteToolBar);
   // overwrite palette
-  QIcon savePaletteIcon = createQIcon("save");
-  QAction *savePalette =
-      new QAction(savePaletteIcon, tr("&Save Palette"), m_savePaletteToolBar);
+  QAction *savePalette = new QAction(createQIcon("save"), tr("&Save Palette"),
+                                     m_savePaletteToolBar);
 
   if (m_viewType == STUDIO_PALETTE) {
     connect(savePalette, SIGNAL(triggered()), this, SLOT(saveStudioPalette()));
@@ -783,7 +808,7 @@ void PaletteViewer::contextMenuEvent(QContextMenuEvent *event) {
 
   QMenu *menu = new QMenu(this);
   if (m_hasPageCommand) {
-    QAction *newPage = menu->addAction(tr("New Page"));
+    QAction *newPage = menu->addAction(createQIcon("newpage"), tr("New Page"));
     connect(newPage, SIGNAL(triggered()), SLOT(addNewPage()));
 
     if (m_pagesBar->geometry().contains(pos)) {
@@ -795,7 +820,8 @@ void PaletteViewer::contextMenuEvent(QContextMenuEvent *event) {
           canRemovePage = false;
         if (canRemovePage) {
           m_indexPageToDelete = tabIndex;
-          QAction *deletePage = menu->addAction(tr("Delete Page"));
+          QAction *deletePage =
+              menu->addAction(createQIcon("delete"), tr("Delete Page"));
           connect(deletePage, SIGNAL(triggered()), SLOT(deletePage()));
         }
       }
@@ -835,6 +861,7 @@ void PaletteViewer::mousePressEvent(QMouseEvent *event) {
 void PaletteViewer::showEvent(QShowEvent *) {
   onPaletteSwitched();
   changeWindowTitle();
+  toggleVariableWidth(m_variableWidthAction->isChecked());
 
   if (!m_paletteHandle) return;
 

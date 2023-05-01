@@ -107,7 +107,7 @@
 // -----------------------------------------------------------------------------
 // Palette Window
 // -----------------------------------------------------------------------------
- 
+
 // All views (except list)
 @palette-SelectedBorderColor: rgb(255, 255, 255);
 @palette-NumpadShortcutBgColor: rgba(0, 0, 0, 0.3);
@@ -302,6 +302,13 @@
 @slider-right-handle: @slider-handle-img;
 @slider-left-handle-disabled: @slider-handle-img-disabled;
 @slider-right-handle-disabled: @slider-handle-img-disabled;
+
+// -----------------------------------------------------------------------------
+// Custom Panel Widgets
+// -----------------------------------------------------------------------------
+
+@customPanel-Scroller-border-color: darken(@text-color, 35);
+@customPanel-Scroller-bg-color: darken(@bg, 8);
 
 // -----------------------------------------------------------------------------
 // Titlebars
@@ -556,9 +563,9 @@
 @function-treeview-text-color: @text-color;
 
 // Function Curve Panel
-@function-panel-bg-color: @xsheet-NotEmptyColumn-color;
-@function-panel-ValueLine-color: fade(@xsheet-LightLine-color, 10);
-@function-panel-FrameLine-color: fade(@xsheet-VerticalLine-color, 10);
+@function-panel-bg-color: darken(@bg, 5);
+@function-panel-ValueLine-color: lighten(@function-panel-bg-color, 4);
+@function-panel-FrameLine-color: lighten(@function-panel-bg-color, 8);
 @function-panel-OtherCurves-color: lighten(@function-panel-bg-color, 30);
 @function-panel-RulerBG-color: darken(@function-panel-bg-color, 3);
 @function-panel-Text-color: @text-color;

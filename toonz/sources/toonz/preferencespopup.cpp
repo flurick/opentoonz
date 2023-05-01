@@ -198,6 +198,13 @@ PreferencesPopup::FormatProperties::FormatProperties(PreferencesPopup* parent)
   m_subsampling = new DVGui::IntLineEdit(this, 1, 1);
   gridLayout->addWidget(m_subsampling, row++, 1);
 
+  QLabel* gammaLabel = new QLabel(LevelSettingsPopup::tr("Color Space Gamma:"));
+  gridLayout->addWidget(gammaLabel, row, 0, Qt::AlignRight);
+
+  m_colorSpaceGamma = new DVGui::DoubleLineEdit(this);
+  m_colorSpaceGamma->setRange(0.1, 10.);
+  gridLayout->addWidget(m_colorSpaceGamma, row++, 1);
+
   addLayout(gridLayout);
 
   endVLayout();
@@ -205,6 +212,10 @@ PreferencesPopup::FormatProperties::FormatProperties(PreferencesPopup* parent)
   // Establish connections
   bool ret = true;
 
+  // enable gamma field only when the regexp field contains ".exr"
+  ret = connect(m_regExp, SIGNAL(editingFinished()),
+                SLOT(updateEnabledStatus())) &&
+        ret;
   ret = connect(m_dpiPolicy, SIGNAL(currentIndexChanged(int)),
                 SLOT(updateEnabledStatus())) &&
         ret;
@@ -220,6 +231,9 @@ PreferencesPopup::FormatProperties::FormatProperties(PreferencesPopup* parent)
 void PreferencesPopup::FormatProperties::updateEnabledStatus() {
   m_dpi->setEnabled(m_dpiPolicy->currentIndex() == DP_CustomDpi);
   m_antialias->setEnabled(m_doAntialias->isChecked());
+
+  // enable gamma field only when the regexp field contains ".exr"
+  m_colorSpaceGamma->setEnabled(m_regExp->text().contains(".exr"));
 }
 
 //-----------------------------------------------------------------------------
@@ -240,6 +254,7 @@ void PreferencesPopup::FormatProperties::setLevelFormat(
   m_doAntialias->setChecked(lo.m_antialias > 0);
   m_antialias->setValue(lo.m_antialias);
   m_subsampling->setValue(lo.m_subsampling);
+  m_colorSpaceGamma->setValue(lo.m_colorSpaceGamma);
 
   updateEnabledStatus();
 }
@@ -264,6 +279,9 @@ Preferences::LevelFormat PreferencesPopup::FormatProperties::levelFormat()
       m_doAntialias->isChecked() ? m_antialias->getValue() : 0;
   lf.m_options.m_premultiply = m_premultiply->isChecked();
   lf.m_options.m_whiteTransp = m_whiteTransp->isChecked();
+
+  if (m_colorSpaceGamma->isEnabled())
+    lf.m_options.m_colorSpaceGamma = m_colorSpaceGamma->getValue();
 
   return lf;
 }
@@ -374,7 +392,7 @@ PreferencesPopup::Display30bitChecker::Display30bitChecker(
   GLView* view10bit     = new GLView(this, true);
   QPushButton* closeBtn = new QPushButton(tr("Close"), this);
   QString infoLabel     = tr(
-          "If the lower gradient looks smooth and has no banding compared to the upper gradient,\n\
+      "If the lower gradient looks smooth and has no banding compared to the upper gradient,\n\
 30bit display is available in the current configuration.");
 
   QVBoxLayout* lay = new QVBoxLayout();
@@ -558,6 +576,10 @@ void PreferencesPopup::onPixelsOnlyChanged() {
   }
   TApp::instance()->getCurrentScene()->notifyPreferenceChanged("pixelsOnly");
 }
+
+//-----------------------------------------------------------------------------
+
+void PreferencesPopup::beforeUnitChanged() { m_pref->storeOldUnits(); }
 
 //-----------------------------------------------------------------------------
 
@@ -1179,7 +1201,7 @@ QString PreferencesPopup::getUIString(PreferencesItemId id) {
       {removeSceneNumberFromLoadedLevelName,
        tr("Automatically Remove Scene Number from Loaded Level Name")},
       {IgnoreImageDpi, tr("Use Camera DPI for All Imported Images")},
-      {initialLoadTlvCachingBehavior, tr("Default TLV Caching Behavior:")},
+      {rasterLevelCachingBehavior, tr("Raster Level Caching Behavior:")},
       {columnIconLoadingPolicy, tr("Column Icon:")},
       //{ levelFormats,                           tr("") },
 
@@ -1241,6 +1263,8 @@ QString PreferencesPopup::getUIString(PreferencesItemId id) {
       {xsheetStep, tr("Next/Previous Step Frames:")},
       {xsheetAutopanEnabled, tr("Xsheet Autopan during Playback")},
       {DragCellsBehaviour, tr("Cell-dragging Behaviour:")},
+      {deleteCommandBehavior, tr("Delete Command Behaviour:")},
+      {pasteCellsBehavior, tr("Paste Cells Behaviour:")},
       {ignoreAlphaonColumn1Enabled,
        tr("Ignore Alpha Channel on Levels in Column 1")},
       {showKeyframesOnXsheetCellArea, tr("Show Keyframes on Cell Area")},
@@ -1357,7 +1381,7 @@ QList<ComboBoxItem> PreferencesPopup::getComboItemList(
        {{tr("Always ask before loading or importing"), 0},
         {tr("Always import the file to the current project"), 1},
         {tr("Always load the file from the current location"), 2}}},
-      {initialLoadTlvCachingBehavior,
+      {rasterLevelCachingBehavior,
        {{tr("On Demand"), 0},
         {tr("All Icons"), 1},
         {tr("All Icons & Images"), 2}}},
@@ -1380,7 +1404,15 @@ QList<ComboBoxItem> PreferencesPopup::getComboItemList(
       {cursorBrushType,
        {{tr("Small"), "Small"},
         {tr("Large"), "Large"},
-        {tr("Crosshair"), "Crosshair"}}},
+        {tr("Crosshair"), "Crosshair"},
+        {tr("Triangle Top Left"), "Triangle Top Left"},
+        {tr("Triangle Top Right"), "Triangle Top Right"},
+        {tr("Triangle Bottom Left"), "Triangle Bottom Left"},
+        {tr("Triangle Bottom Right"), "Triangle Bottom Right"},
+        {tr("Triangle Up"), "Triangle Up"},
+        {tr("Triangle Down"), "Triangle Down"},
+        {tr("Triangle Left"), "Triangle Left"},
+        {tr("Triangle Right"), "Triangle Right"}}},
       {cursorBrushStyle,
        {{tr("Default"), "Default"},
         {tr("Left-Handed"), "Left-Handed"},
@@ -1401,6 +1433,12 @@ QList<ComboBoxItem> PreferencesPopup::getComboItemList(
          Preferences::ShowLevelNameOnColumnHeader}}},
       {DragCellsBehaviour,
        {{tr("Cells Only"), 0}, {tr("Cells and Column Data"), 1}}},
+      {deleteCommandBehavior,
+       {{tr("Clear Cell / Frame"), 0},
+        {tr("Remove and Shift Cells / Frames Up"), 1}}},
+      {pasteCellsBehavior,
+       {{tr("Insert Paste Whole Data"), 0},
+        {tr("Overwrite Paste Cell Numbers"), 1}}},
       {keyframeType,  // note that the value starts from 1, not 0
        {{tr("Constant"), 1},
         {tr("Linear"), 2},
@@ -1671,7 +1709,9 @@ QWidget* PreferencesPopup::createInterfacePage() {
                            &PreferencesPopup::onStyleSheetTypeChanged);
   m_onEditedFuncMap.insert(iconTheme, &PreferencesPopup::onIconThemeChanged);
   m_onEditedFuncMap.insert(pixelsOnly, &PreferencesPopup::onPixelsOnlyChanged);
+  m_preEditedFuncMap.insert(linearUnits, &PreferencesPopup::beforeUnitChanged);
   m_onEditedFuncMap.insert(linearUnits, &PreferencesPopup::onUnitChanged);
+  m_preEditedFuncMap.insert(cameraUnits, &PreferencesPopup::beforeUnitChanged);
   m_onEditedFuncMap.insert(cameraUnits, &PreferencesPopup::onUnitChanged);
   m_preEditedFuncMap.insert(CurrentRoomChoice,
                             &PreferencesPopup::beforeRoomChoiceChanged);
@@ -1719,8 +1759,8 @@ QWidget* PreferencesPopup::createLoadingPage() {
   insertUI(subsceneFolderEnabled, lay);
   insertUI(removeSceneNumberFromLoadedLevelName, lay);
   insertUI(IgnoreImageDpi, lay);
-  insertUI(initialLoadTlvCachingBehavior, lay,
-           getComboItemList(initialLoadTlvCachingBehavior));
+  insertUI(rasterLevelCachingBehavior, lay,
+           getComboItemList(rasterLevelCachingBehavior));
   insertUI(columnIconLoadingPolicy, lay,
            getComboItemList(columnIconLoadingPolicy));
 
@@ -1961,6 +2001,8 @@ QWidget* PreferencesPopup::createXsheetPage() {
   insertUI(xsheetStep, lay);
   insertUI(xsheetAutopanEnabled, lay);
   insertUI(DragCellsBehaviour, lay, getComboItemList(DragCellsBehaviour));
+  insertUI(deleteCommandBehavior, lay, getComboItemList(deleteCommandBehavior));
+  insertUI(pasteCellsBehavior, lay, getComboItemList(pasteCellsBehavior));
   insertUI(ignoreAlphaonColumn1Enabled, lay);
   QGridLayout* showKeyLay =
       insertGroupBoxUI(showKeyframesOnXsheetCellArea, lay);
