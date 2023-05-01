@@ -36,6 +36,8 @@
 #include "toonz/tproject.h"
 #include "tconvert.h"
 #include "toonz/navigationtags.h"
+#include "toonz/txshlevelcolumn.h"
+#include "toonz/txshpalettecolumn.h"
 
 #include "tenv.h"
 
@@ -210,11 +212,7 @@ void XsheetViewer::getButton(const int &btype, QColor &bgColor,
 
 //-----------------------------------------------------------------------------
 
-#if QT_VERSION >= 0x050500
 XsheetViewer::XsheetViewer(QWidget *parent, Qt::WindowFlags flags)
-#else
-XsheetViewer::XsheetViewer(QWidget *parent, Qt::WFlags flags)
-#endif
     : QFrame(parent)
     , m_timerId(0)
     , m_autoPanSpeed(0, 0)
@@ -234,7 +232,6 @@ XsheetViewer::XsheetViewer(QWidget *parent, Qt::WFlags flags)
     , m_orientation(nullptr)
     , m_xsheetLayout("Classic")
     , m_frameZoomFactor(100) {
-
   m_xsheetLayout = Preferences::instance()->getLoadedXsheetLayout();
 
   setFocusPolicy(Qt::StrongFocus);
@@ -525,9 +522,22 @@ void XsheetViewer::setCurrentColumn(int col) {
       objectHandle->setObjectId(TStageObjectId::ColumnId(col));
       TXsheet *xsh       = getXsheet();
       TXshColumn *column = xsh->getColumn(col);
-      if (!column || !column->getZeraryFxColumn()) return;
-      TFx *fx = column->getZeraryFxColumn()->getZeraryColumnFx();
-      TApp::instance()->getCurrentFx()->setFx(fx);
+      if (!column) return;
+      // switching the current fx
+      TFx *fx                 = nullptr;
+      bool doSwitchFxSettings = false;
+      if (TXshLevelColumn *lc = column->getLevelColumn())
+        fx = lc->getLevelColumnFx();
+      else if (TXshPaletteColumn *pc =
+                   dynamic_cast<TXshPaletteColumn *>(column))
+        fx = pc->getPaletteColumnFx();
+      else if (TXshZeraryFxColumn *zc =
+                   dynamic_cast<TXshZeraryFxColumn *>(column)) {
+        fx                 = zc->getZeraryColumnFx();
+        doSwitchFxSettings = true;
+      }
+      if (!fx) return;
+      TApp::instance()->getCurrentFx()->setFx(fx, doSwitchFxSettings);
     }
     return;
   }
@@ -693,7 +703,7 @@ bool XsheetViewer::refreshContentSize(int dx, int dy) {
   QSize viewportSize = m_cellScrollArea->viewport()->size();
   QPoint offset      = m_cellArea->pos();
   offset             = QPoint(std::min(0, offset.x() - dx),
-                  std::min(0, offset.y() - dy));  // what?
+                              std::min(0, offset.y() - dy));  // what?
 
   TXsheet *xsh    = getXsheet();
   int frameCount  = xsh ? xsh->getFrameCount() : 0;
@@ -1428,7 +1438,7 @@ void XsheetViewer::onCurrentFrameSwitched() {
   m_isCurrentFrameSwitched = false;
   scrollToRow(row);
 
-  TXsheet *xsh = getXsheet();
+  TXsheet *xsh            = getXsheet();
   NavigationTags *navTags = xsh->getNavigationTags();
   int lastTag             = navTags->getPrevTag(INT_MAX);
   int firstTag            = navTags->getNextTag(-1);

@@ -193,8 +193,8 @@ public:
   // Interface  tab
   QStringList getStyleSheetList() const { return m_styleSheetList; }
   bool getIconTheme() const { return getBoolValue(iconTheme); }
-  void storeOldUnits();  // OK
-  void resetOldUnits();  // OK
+  void storeOldUnits();
+  void resetOldUnits();
   QStringList getLanguageList() const { return m_languageList; }
   QMap<int, QString> getRoomMap() const { return m_roomMaps; }
 
@@ -250,8 +250,8 @@ public:
     return getBoolValue(removeSceneNumberFromLoadedLevelName);
   }
   bool isIgnoreImageDpiEnabled() const { return getBoolValue(IgnoreImageDpi); }
-  int getInitialLoadTlvCachingBehavior() const {
-    return getIntValue(initialLoadTlvCachingBehavior);
+  int getRasterLevelCachingBehavior() const {
+    return getIntValue(rasterLevelCachingBehavior);
   }
   ColumnIconLoadingPolicy getColumnIconLoadingPolicy() const {
     return ColumnIconLoadingPolicy(getIntValue(columnIconLoadingPolicy));
@@ -365,6 +365,10 @@ public:
     return getBoolValue(xsheetAutopanEnabled);
   }  //!< Returns whether xsheet pans during playback.
   int getDragCellsBehaviour() const { return getIntValue(DragCellsBehaviour); }
+  int getDeleteCommandBehaviour() const {
+    return getIntValue(deleteCommandBehavior);
+  }
+  int getPasteCellsBehavior() const { return getIntValue(pasteCellsBehavior); }
   bool isIgnoreAlphaonColumn1Enabled() const {
     return getBoolValue(ignoreAlphaonColumn1Enabled);
   }

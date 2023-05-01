@@ -362,13 +362,8 @@ void Room::load(const TFilePath &fp) {
 // MainWindow
 //-----------------------------------------------------------------------------
 
-#if QT_VERSION >= 0x050500
 MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent,
                        Qt::WindowFlags flags)
-#else
-MainWindow::MainWindow(const QString &argumentLayoutFileName, QWidget *parent,
-                       Qt::WFlags flags)
-#endif
     : QMainWindow(parent, flags)
     , m_saveSettingsOnQuit(true)
     , m_oldRoomIndex(0)
@@ -1398,6 +1393,14 @@ QAction *MainWindow::createAction(const char *id, const char *name,
                                   CommandType type, const char *iconSVGName) {
   QAction *action = new DVAction(tr(name), this);
 
+  // For "edit" category menu commands may behave various function
+  // according to the current selection.
+  // Now the command name can be adjusted on switching the selection.
+  // Here we explicitly register the default text in order to recover the
+  // command name if the selection does not specify the alternative command
+  // name.
+  if (type == MenuEditCommandType) action->setIconText(tr(name));
+
 #if !defined(_WIN32)
   bool visible = Preferences::instance()->getBoolValue(showIconsInMenu);
   action->setIconVisibleInMenu(visible);
@@ -1757,6 +1760,8 @@ void MainWindow::defineActions() {
                        "", "clear_cache");
   createMenuFileAction(MI_ExportCurrentScene,
                        QT_TR_NOOP("&Export Current Scene"), "");
+  createMenuFileAction(MI_ExportCameraTrack, QT_TR_NOOP("&Export Camera Track"),
+                       "");
 
   // Menu - Edit
 
@@ -2302,6 +2307,8 @@ void MainWindow::defineActions() {
                              "", "shift_keys_up");
   createRightClickMenuAction(MI_PasteNumbers, QT_TR_NOOP("&Paste Numbers"), "",
                              "paste_numbers");
+  createRightClickMenuAction(MI_PasteCellContent,
+                             QT_TR_NOOP("&Paste Cell Content"), "", "paste");
 
   createRightClickMenuAction(MI_Histogram, QT_TR_NOOP("&Histogram"), "");
   // MI_ViewerHistogram command is used as a proxy. It will be called when

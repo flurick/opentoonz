@@ -1,5 +1,5 @@
 
-#if defined(LINUX) || defined(FREEBSD)
+#if defined(LINUX) || defined(FREEBSD) || defined(HAIKU)
 #define GL_GLEXT_PROTOTYPES
 #endif
 
@@ -82,11 +82,7 @@
 #include <QMenu>
 #include <QApplication>
 #include <QDesktopWidget>
-#if QT_VERSION >= 0x050000
 #include <QInputMethod>
-#else
-#include <QInputContext>
-#endif
 #include <QGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QMainWindow>
@@ -812,10 +808,8 @@ SceneViewer::SceneViewer(ImageUtils::FullScreenWidget *parent)
   setFocusPolicy(Qt::StrongFocus);
   setAcceptDrops(true);
   this->setMouseTracking(true);
-// introduced from Qt 5.9
-#if QT_VERSION >= 0x050900
+  // introduced from Qt 5.9
   this->setTabletTracking(true);
-#endif
 
   for (int i = 0; i < m_viewAff.size(); ++i) {
     setViewMatrix(getNormalZoomScale(), i);
@@ -954,9 +948,12 @@ void SceneViewer::enablePreview(int previewMode) {
     emit freezeStateChanged(false);
   }
 
-  if (m_previewMode != NO_PREVIEW)
+  if (m_previewMode != NO_PREVIEW) {
     Previewer::instance(m_previewMode == SUBCAMERA_PREVIEW)
         ->removeListener(this);
+    Previewer::instance(m_previewMode == SUBCAMERA_PREVIEW)
+        ->clearAllUnfinishedFrames();
+  }
 
   m_previewMode = previewMode;
 
@@ -3238,11 +3235,7 @@ void drawSpline(const TAffine &viewMatrix, const TRect &clipRect, bool camera3d,
 //-----------------------------------------------------------------------------
 
 void SceneViewer::resetInputMethod() {
-#if QT_VERSION >= 0x050000
   QGuiApplication::inputMethod()->reset();
-#else
-  qApp->inputContext()->reset();
-#endif
 }
 
 //-----------------------------------------------------------------------------

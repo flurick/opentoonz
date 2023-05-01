@@ -116,7 +116,21 @@ bool containsRasterLevel(TColumnSelection *selection) {
 const QIcon getColorChipIcon(TPixel32 color) {
   QColor qCol((int)color.r, (int)color.g, (int)color.b, (int)color.m);
   QPixmap pixmap(12, 12);
-  pixmap.fill(qCol);
+  if (color.m == TPixel32::maxChannelValue) {
+    pixmap.fill(qCol);
+    return QIcon(pixmap);
+  }
+  static QPixmap checkPm;
+  if (checkPm.isNull()) {
+    checkPm = QPixmap(12, 12);
+    checkPm.fill(Qt::white);
+    QPainter cp(&checkPm);
+    cp.fillRect(0, 0, 6, 6, Qt::black);
+    cp.fillRect(6, 6, 6, 6, Qt::black);
+  }
+  pixmap = checkPm;
+  QPainter p(&pixmap);
+  p.fillRect(0, 0, 12, 12, qCol);
   return QIcon(pixmap);
 }
 
@@ -232,11 +246,7 @@ static void getVolumeCursorRect(QRect &out, double volume,
 // MotionPathMenu
 //-----------------------------------------------------------------------------
 
-#if QT_VERSION >= 0x050500
 MotionPathMenu::MotionPathMenu(QWidget *parent, Qt::WindowFlags flags)
-#else
-MotionPathMenu::MotionPathMenu(QWidget *parent, Qt::WFlags flags)
-#endif
     : QWidget(parent, flags)
     , m_mDeleteRect(QRect(0, 0, ColumnWidth - 13, RowHeight))
     , m_mNormalRect(QRect(0, RowHeight, ColumnWidth - 13, RowHeight))
@@ -1257,8 +1267,7 @@ void ColumnArea::DrawHeader::drawPegbarName() const {
   p.setPen(m_viewer->getVerticalLineColor());
   if (o->flag(PredefinedFlag::PEGBAR_NAME_BORDER)) p.drawRect(pegbarnamerect);
 
-  if (column->getSoundColumn() || column->getSoundTextColumn())
-    return;
+  if (column->getSoundColumn() || column->getSoundTextColumn()) return;
 
   if (Preferences::instance()->isParentColorsInXsheetColumnEnabled() &&
       column->isPreviewVisible()) {
@@ -1326,15 +1335,20 @@ void ColumnArea::DrawHeader::drawParentHandleName() const {
 }
 
 void ColumnArea::DrawHeader::drawFilterColor() const {
-  if (col < 0 || isEmpty || !column->getFilterColorId() ||
+  if (col < 0 || isEmpty || column->getColorFilterId() == 0 ||
       column->getSoundColumn() || column->getSoundTextColumn() ||
       column->getPaletteColumn())
     return;
 
+  TPixel32 filterColor = TApp::instance()
+                             ->getCurrentScene()
+                             ->getScene()
+                             ->getProperties()
+                             ->getColorFilterColor(column->getColorFilterId());
+
   QRect filterColorRect =
       o->rect(PredefinedRect::FILTER_COLOR).translated(orig);
-  p.drawPixmap(filterColorRect,
-               getColorChipIcon(column->getFilterColor()).pixmap(12, 12));
+  p.drawPixmap(filterColorRect, getColorChipIcon(filterColor).pixmap(12, 12));
 }
 
 void ColumnArea::DrawHeader::drawSoundIcon(bool isPlaying) const {
@@ -1419,11 +1433,7 @@ void ColumnArea::DrawHeader::drawVolumeControl(double volume) const {
 //=============================================================================
 // ColumnArea
 //-----------------------------------------------------------------------------
-#if QT_VERSION >= 0x050500
 ColumnArea::ColumnArea(XsheetViewer *parent, Qt::WindowFlags flags)
-#else
-ColumnArea::ColumnArea(XsheetViewer *parent, Qt::WFlags flags)
-#endif
     : QWidget(parent, flags)
     , m_viewer(parent)
     , m_pos(-1, -1)
@@ -1934,15 +1944,8 @@ m_value->setFixedWidth(30);
 static QFont font("Helvetica", 7, QFont::Normal);
 m_value->setFont(font);*/
 
+  // contents of the combo box will be updated in setColumn
   m_filterColorCombo = new QComboBox(this);
-  for (int f = 0; f < (int)TXshColumn::FilterAmount; f++) {
-    QPair<QString, TPixel32> info =
-        TXshColumn::getFilterInfo((TXshColumn::FilterColor)f);
-    if ((TXshColumn::FilterColor)f == TXshColumn::FilterNone)
-      m_filterColorCombo->addItem(info.first, f);
-    else
-      m_filterColorCombo->addItem(getColorChipIcon(info.second), info.first, f);
-  }
 
   // Lock button is moved in the popup for Minimum layout
   QPushButton *lockExtraBtn = nullptr;
@@ -2002,14 +2005,14 @@ m_value->setFont(font);*/
   bool ret = connect(m_slider, SIGNAL(sliderReleased()), this,
                      SLOT(onSliderReleased()));
   ret      = ret && connect(m_slider, SIGNAL(sliderMoved(int)), this,
-                       SLOT(onSliderChange(int)));
+                            SLOT(onSliderChange(int)));
   ret      = ret && connect(m_slider, SIGNAL(valueChanged(int)), this,
-                       SLOT(onSliderValueChanged(int)));
+                            SLOT(onSliderValueChanged(int)));
   ret      = ret && connect(m_value, SIGNAL(textChanged(const QString &)), this,
-                       SLOT(onValueChanged(const QString &)));
+                            SLOT(onValueChanged(const QString &)));
 
   ret = ret && connect(m_filterColorCombo, SIGNAL(activated(int)), this,
-                       SLOT(onFilterColorChanged(int)));
+                       SLOT(onFilterColorChanged()));
   if (m_lockBtn)
     ret = ret && connect(m_lockBtn, SIGNAL(clicked(bool)), this,
                          SLOT(onLockButtonClicked(bool)));
@@ -2054,9 +2057,11 @@ void ColumnTransparencyPopup::onValueChanged(const QString &str) {
 }
 
 //----------------------------------------------------------------
-
-void ColumnTransparencyPopup::onFilterColorChanged(int id) {
-  m_column->setFilterColorId((TXshColumn::FilterColor)id);
+// TODO : UNDO
+void ColumnTransparencyPopup::onFilterColorChanged() {
+  int id = m_filterColorCombo->currentData().toInt();
+  if (m_column->getColorFilterId() == id) return;
+  m_column->setColorFilterId(id);
   TApp::instance()->getCurrentScene()->notifySceneChanged();
   TApp::instance()->getCurrentXsheet()->notifyXsheetChanged();
   ((ColumnArea *)parent())->update();
@@ -2085,7 +2090,25 @@ void ColumnTransparencyPopup::setColumn(TXshColumn *column) {
   connect(m_value, SIGNAL(textChanged(const QString &)), this,
           SLOT(onValueChanged(const QString &)));
 
-  m_filterColorCombo->setCurrentIndex(m_column->getFilterColorId());
+  m_filterColorCombo->clear();
+  // initialize color filter combo box
+  QList<TSceneProperties::ColorFilter> filters = TApp::instance()
+                                                     ->getCurrentScene()
+                                                     ->getScene()
+                                                     ->getProperties()
+                                                     ->getColorFilters();
+
+  for (int f = 0; f < filters.size(); f++) {
+    TSceneProperties::ColorFilter filter = filters.at(f);
+    if (f == 0)
+      m_filterColorCombo->addItem(filter.name, f);
+    else if (!filter.name.isEmpty())
+      m_filterColorCombo->addItem(getColorChipIcon(filter.color), filter.name,
+                                  f);
+  }
+
+  m_filterColorCombo->setCurrentIndex(
+      m_filterColorCombo->findData(m_column->getColorFilterId()));
 
   if (m_lockBtn) m_lockBtn->setChecked(m_column->isLocked());
 }
@@ -2136,11 +2159,11 @@ SoundColumnPopup::SoundColumnPopup(QWidget *parent)
   bool ret = connect(m_slider, SIGNAL(sliderReleased()), this,
                      SLOT(onSliderReleased()));
   ret      = ret && connect(m_slider, SIGNAL(sliderMoved(int)), this,
-                       SLOT(onSliderChange(int)));
+                            SLOT(onSliderChange(int)));
   ret      = ret && connect(m_slider, SIGNAL(valueChanged(int)), this,
-                       SLOT(onSliderValueChanged(int)));
+                            SLOT(onSliderValueChanged(int)));
   ret      = ret && connect(m_value, SIGNAL(textChanged(const QString &)), this,
-                       SLOT(onValueChanged(const QString &)));
+                            SLOT(onValueChanged(const QString &)));
   assert(ret);
 }
 
