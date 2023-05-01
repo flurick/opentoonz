@@ -241,7 +241,7 @@ public:
 //-------------------------------------------------------------------
 
 class TDottedLineStrokeStyle final : public TOptimizedStrokeStyleT<Points> {
-  TPixel32 m_color;
+  TPixel32 m_color0, m_color1;
   double m_in, m_line, m_out, m_blank, m_offset;
 
 public:
@@ -264,8 +264,8 @@ public:
   }
 
   bool hasMainColor() const override { return true; }
-  TPixel32 getMainColor() const override { return m_color; }
-  void setMainColor(const TPixel32 &color) override { m_color = color; }
+  TPixel32 getMainColor() const override { return m_color0; }
+  void setMainColor(const TPixel32 &color) override { m_color0 = color; }
 
   int getParamCount() const override;
   TColorStyle::ParamType getParamType(int index) const override;
@@ -276,12 +276,23 @@ public:
   void setParamValue(int index, double value) override;
 
   void loadData(TInputStreamInterface &is) override {
-    is >> m_color >> m_in >> m_line >> m_out >> m_blank >> m_offset;
+    is >> m_color0 >> m_in >> m_line >> m_out >> m_blank >> m_offset >> m_color1;
   }
   void saveData(TOutputStreamInterface &os) const override {
-    os << m_color << m_in << m_line << m_out << m_blank << m_offset;
+    os << m_color0 << m_in << m_line << m_out << m_blank << m_offset << m_color1;
   }
   bool isSaveSupported() { return true; }
+
+  int getColorParamCount() const override { return 2; }
+  TPixel32 getColorParamValue(int index) const override {
+    return index == 0 ? m_color0 : m_color1;
+  }
+  void setColorParamValue(int index, const TPixel32 &color) override {
+    if (index == 0)
+      m_color0 = color;
+    else
+      m_color1 = color;
+  }
 
   int getTagId() const override { return 111; }
 };

@@ -730,12 +730,13 @@ double inline get_line_slope(double meter, double inmax, double linemax,
 //-----------------------------------------------------------------------------
 
 TDottedLineStrokeStyle::TDottedLineStrokeStyle()
-    : m_color(TPixel32::Black)
+    : m_color0(TPixel32::Black)
     , m_in(10.0)
     , m_line(50.0)
     , m_out(10.0)
     , m_blank(10.0)
-    , m_offset(0.0) {}
+    , m_offset(0.0)
+    , m_color1(TPixel32::Black) {}
 
 //-----------------------------------------------------------------------------
 
@@ -882,7 +883,6 @@ void TDottedLineStrokeStyle::computeData(Points &positions,
   double s            = 0; //used to step through the line
   double meter        = 0; //used to get each steps slope
   double center       = 0;
-  double slopetmp     = 0; //seemingly unused
   double minthickness = MINTHICK * sqrt(tglGetPixelSize2());
   double thickness    = 0;
   double line = 0, in = 0, out = 0, blank = 0;
@@ -926,7 +926,6 @@ void TDottedLineStrokeStyle::computeData(Points &positions,
     u            = normalize(u);
     double slope = 0;
     slope        = get_line_slope(meter, in, line, out);
-    slopetmp     = slope;
     TPointD v    = rotate90(u) * (thickness)*slope;
     if (pos.thick * slope < 1)
       center = 0.0;
@@ -952,23 +951,28 @@ void TDottedLineStrokeStyle::computeData(Points &positions,
 void TDottedLineStrokeStyle::drawStroke(const TColorFunction *cf,
                                         Points &positions,
                                         const TStroke *stroke) const {
-  TPixel32 color;
-  if (cf)
-    color = (*(cf))(m_color);
-  else
-    color = m_color;
+  TPixel32 color0 = m_color0;
+  TPixel32 color1 = m_color1;
+
+  if (cf){
+    color0 = (*(cf))(m_color0);
+    color1 = (*(cf))(m_color1);
+  } else {
+    color0 = m_color0;
+    color1 = m_color1;
+  }
 
   for (UINT i = 4; i < positions.size(); i += 4) {
     glBegin(GL_QUAD_STRIP);
-    glColor4ub(color.r, color.g, color.b, 0);
+    glColor4ub(color1.r, color1.g, color1.b, color1.m);
     tglVertex(positions[i - 4]);
     tglVertex(positions[i]);
-    glColor4ub(color.r, color.g, color.b, color.m);
+    glColor4ub(color0.r, color0.g, color0.b, color0.m);
     tglVertex(positions[i - 3]);
     tglVertex(positions[i + 1]);
     tglVertex(positions[i - 2]);
     tglVertex(positions[i + 2]);
-    glColor4ub(color.r, color.g, color.b, 0);
+    glColor4ub(color1.r, color1.g, color1.b, color1.m);
     tglVertex(positions[i - 1]);
     tglVertex(positions[i + 3]);
     glEnd();
