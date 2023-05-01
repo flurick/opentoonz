@@ -736,6 +736,8 @@ TDottedLineStrokeStyle::TDottedLineStrokeStyle()
     , m_out(10.0)
     , m_blank(10.0)
     , m_offset(0.0)
+    , m_line_relative(0.0)
+    , m_blank_relative(0.0)
     , m_color1(TPixel32::Black) {}
 
 //-----------------------------------------------------------------------------
@@ -746,7 +748,7 @@ TColorStyle *TDottedLineStrokeStyle::clone() const {
 
 //-----------------------------------------------------------------------------
 
-int TDottedLineStrokeStyle::getParamCount() const { return 5; }
+int TDottedLineStrokeStyle::getParamCount() const { return 7; }
 
 //-----------------------------------------------------------------------------
 
@@ -758,7 +760,7 @@ TColorStyle::ParamType TDottedLineStrokeStyle::getParamType(int index) const {
 //-----------------------------------------------------------------------------
 
 QString TDottedLineStrokeStyle::getParamNames(int index) const {
-  assert(0 <= index && index < 5);
+  assert(0 <= index && index < 7);
   QString value;
   switch (index) {
   case 0:
@@ -776,6 +778,12 @@ QString TDottedLineStrokeStyle::getParamNames(int index) const {
   case 4:
     value = QCoreApplication::translate("TDottedLineStrokeStyle", "Offset (%)");
     break;
+  case 5:
+    value = QCoreApplication::translate("TDottedLineStrokeStyle", "Dash (%)");
+    break;
+  case 6:
+    value = QCoreApplication::translate("TDottedLineStrokeStyle", "Gap (%)");
+    break;
   }
   return value;
 }
@@ -784,18 +792,18 @@ QString TDottedLineStrokeStyle::getParamNames(int index) const {
 
 void TDottedLineStrokeStyle::getParamRange(int index, double &min,
                                            double &max) const {
-  assert(0 <= index && index < 5);
+  assert(0 <= index && index < 7);
   switch (index) {
   case 0:
-    min = 1.0;
+    min = 0.0;
     max = 100.0;
     break;
   case 1:
-    min = 1.0;
+    min = 0.0;
     max = 100.0;
     break;
   case 2:
-    min = 1.;
+    min = 0.0;
     max = 100.0;
     break;
   case 3:
@@ -806,6 +814,14 @@ void TDottedLineStrokeStyle::getParamRange(int index, double &min,
     min = -100.0;
     max = 100.0;
     break;
+  case 5:
+    min = 0.0;
+    max = 100.0;
+    break;
+  case 6:
+    min = 0.0;
+    max = 100.0;
+    break;
   }
 }
 
@@ -813,7 +829,7 @@ void TDottedLineStrokeStyle::getParamRange(int index, double &min,
 
 double TDottedLineStrokeStyle::getParamValue(TColorStyle::double_tag,
                                              int index) const {
-  assert(0 <= index && index < 5);
+  assert(0 <= index && index < 7);
   double value = 0;
   switch (index) {
   case 0:
@@ -831,6 +847,12 @@ double TDottedLineStrokeStyle::getParamValue(TColorStyle::double_tag,
   case 4:
     value = m_offset;
     break;
+  case 5:
+    value = m_line_relative;
+    break;
+  case 6:
+    value = m_blank_relative;
+    break;
   }
   return value;
 }
@@ -838,7 +860,7 @@ double TDottedLineStrokeStyle::getParamValue(TColorStyle::double_tag,
 //-----------------------------------------------------------------------------
 
 void TDottedLineStrokeStyle::setParamValue(int index, double value) {
-  assert(0 <= index && index < 5);
+  assert(0 <= index && index < 7);
   switch (index) {
   case 0:
     m_in = value;
@@ -854,6 +876,12 @@ void TDottedLineStrokeStyle::setParamValue(int index, double value) {
     break;
   case 4:
     m_offset = value;
+    break;
+  case 5:
+    m_line_relative = value;
+    break;
+  case 6:
+    m_blank_relative = value;
     break;
   }
   updateVersionNumber();
@@ -901,12 +929,12 @@ void TDottedLineStrokeStyle::computeData(Points &positions,
     if (meter >= total) {
       meter = 0;
 
-      line                        = linemax * (1 + rnd.getFloat()) * thickness;
+      line                        = linemax * (1 + rnd.getFloat()) * thickness+ (length*(m_line_relative*0.01));
       if (line > length - s) line = length - s;
       in                          = inmax * line;
       out                         = outmax * line;
       line                        = line - in - out;
-      blank                       = blankmax * (1 + rnd.getFloat()) * thickness;
+      blank                       = blankmax * (1 + rnd.getFloat()) * thickness  + (length*(m_blank_relative*0.01));
       if (in + out > length) {
         in   = rnd.getFloat() * (length / 2);
         out  = length - in;

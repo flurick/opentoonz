@@ -242,7 +242,7 @@ public:
 
 class TDottedLineStrokeStyle final : public TOptimizedStrokeStyleT<Points> {
   TPixel32 m_color0, m_color1;
-  double m_in, m_line, m_out, m_blank, m_offset;
+  double m_in, m_line, m_out, m_blank, m_offset, m_line_relative, m_blank_relative;
 
 public:
   TDottedLineStrokeStyle();
@@ -276,10 +276,10 @@ public:
   void setParamValue(int index, double value) override;
 
   void loadData(TInputStreamInterface &is) override {
-    is >> m_color0 >> m_in >> m_line >> m_out >> m_blank >> m_offset >> m_color1;
+    is >> m_color0 >> m_in >> m_line >> m_out >> m_blank >> m_offset >> m_line_relative >> m_blank_relative >> m_color1;
   }
   void saveData(TOutputStreamInterface &os) const override {
-    os << m_color0 << m_in << m_line << m_out << m_blank << m_offset << m_color1;
+    os << m_color0 << m_in << m_line << m_out << m_blank << m_offset << m_line_relative << m_blank_relative << m_color1;
   }
   bool isSaveSupported() { return true; }
 
