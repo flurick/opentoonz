@@ -1,6 +1,7 @@
 
 
 #include "toonz/toonzfolders.h"
+#include "qdebug.h"
 #include "tsystem.h"
 #include "tenv.h"
 #include "tconvert.h"
@@ -111,6 +112,7 @@ TFilePath ToonzFolder::getCacheRootFolder() {
   static enum STATE { FIRSTTIME, OK, NG } state = FIRSTTIME;
   QString cacheDir =
       QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+  qDebug() << "Cache path: " << cacheDir;
   if (state == FIRSTTIME) {
     if (QDir(cacheDir).mkpath("."))
       state = OK;
