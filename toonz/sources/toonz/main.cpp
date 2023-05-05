@@ -504,9 +504,9 @@ int main(int argc, char *argv[]) {
     sFmt.setGreenBufferSize(10);
     sFmt.setBlueBufferSize(10);
     sFmt.setAlphaBufferSize(2);
+    sFmt.setSwapInterval(0); //disable vsync - to reduces input lag
     QSurfaceFormat::setDefaultFormat(sFmt);
   }
-
   // Initialize thread components
   TThread::init();
 
