@@ -146,7 +146,7 @@ void Iwa_GlareFx::drawPresetIris(TRaster32P irisRas, double irisSize,
              QImage::Format_ARGB32_Premultiplied);
   img.fill(Qt::black);
   QPainter painter(&img);
-  painter.setRenderHint(QPainter::Antialiasing, true);
+//  painter.setRenderHint(QPainter::Antialiasing, true);
   painter.translate(
       QPointF((float)irisRas->getLx() / 2.0, (float)irisRas->getLy() / 2.0));
   painter.scale(irisSize, irisSize);

@@ -637,7 +637,7 @@ void ChennelCurveEditor::paintEvent(QPaintEvent *e) {
 
   double scale = (m_isEnlarged) ? 2.0 : 1.0;
   // Disegno il reticolato
-  painter.setRenderHint(QPainter::Antialiasing, false);
+//  painter.setRenderHint(QPainter::Antialiasing, false);
   painter.setPen(QColor(250, 250, 250));
 
   // Disegno l'histogram.
@@ -659,7 +659,7 @@ void ChennelCurveEditor::paintEvent(QPaintEvent *e) {
 
   QPainterPath path = getPainterPath();
   if (path.isEmpty()) return;
-  painter.setRenderHint(QPainter::Antialiasing, true);
+//  painter.setRenderHint(QPainter::Antialiasing, true);
   QPen blackPen(Qt::black);
   QPen bluePen(Qt::blue);
   blackPen.setWidthF(1.0 / scale);

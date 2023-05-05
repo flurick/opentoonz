@@ -409,7 +409,7 @@ TRaster32P ToolUtils::convertStrokeToImage(TStroke *stroke,
   QPainter p(&img);
   p.setPen(QPen(color, 1, Qt::SolidLine));
   p.setBrush(color);
-  p.setRenderHint(QPainter::Antialiasing, !pencilMode);
+//  p.setRenderHint(QPainter::Antialiasing, !pencilMode);
   QPainterPath path = strokeToPainterPath(&s);
   QRectF pathRect   = path.boundingRect();
   p.translate(-toQPoint(pos));
@@ -1605,7 +1605,7 @@ void ToolUtils::drawBalloon(const TPointD &pos, std::string text,
   label.fill(Qt::transparent);
   // label.fill(qRgba(200,200,0,200));
   QPainter p(&label);
-  p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+//  p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
   p.setBrush(QColor(color.r, color.g, color.b, color.m));
   p.setPen(Qt::NoPen);
 

@@ -780,7 +780,7 @@ void ColumnArea::DrawHeader::prepare() const {
   font.setPixelSize(XSHEET_FONT_PX_SIZE);
 
   p.setFont(font);
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
 }
 
 //-----------------------------------------------------------------------------
@@ -1598,7 +1598,7 @@ void ColumnArea::drawLevelColumnHead(QPainter &p, int col) {
   font.setPixelSize(XSHEET_FONT_PX_SIZE);
 
   p.setFont(font);
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   // Retrieve reference coordinates
   int currentColumnIndex = m_viewer->getCurrentColumn();
@@ -1660,7 +1660,7 @@ void ColumnArea::drawSoundColumnHead(QPainter &p, int col) {  // AREA
 
   int x = m_viewer->columnToLayerAxis(col);
 
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
   QString fontName = Preferences::instance()->getInterfaceFont();
   if (fontName == "") {
 #ifdef _WIN32
@@ -1727,7 +1727,7 @@ void ColumnArea::drawPaletteColumnHead(QPainter &p, int col) {  // AREA
   font.setPixelSize(XSHEET_FONT_PX_SIZE);
 
   p.setFont(font);
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   int currentColumnIndex = m_viewer->getCurrentColumn();
   int x                  = m_viewer->columnToLayerAxis(col);
@@ -1766,7 +1766,7 @@ void ColumnArea::drawSoundTextColumnHead(QPainter &p, int col) {  // AREA
 
   int x = m_viewer->columnToLayerAxis(col);
 
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
   QString fontName = Preferences::instance()->getInterfaceFont();
   if (fontName == "") {
 #ifdef _WIN32

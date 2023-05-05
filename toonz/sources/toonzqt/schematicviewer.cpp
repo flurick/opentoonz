@@ -303,9 +303,9 @@ SchematicSceneViewer::SchematicSceneViewer(QWidget *parent)
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setDragMode(QGraphicsView::NoDrag);
   setTransformationAnchor(QGraphicsView::NoAnchor);
-  setRenderHint(QPainter::SmoothPixmapTransform);
-  setRenderHint(QPainter::TextAntialiasing);
-  setRenderHint(QPainter::Antialiasing);
+//  setRenderHint(QPainter::SmoothPixmapTransform);
+//  setRenderHint(QPainter::TextAntialiasing);
+//  setRenderHint(QPainter::Antialiasing);
   setInteractive(true);
   setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
   show();

@@ -627,7 +627,7 @@ void FunctionPanel::drawValueGrid(QPainter &painter) {
 //-----------------------------------------------------------------------------
 
 void FunctionPanel::drawOtherCurves(QPainter &painter) {
-  painter.setRenderHint(QPainter::Antialiasing, false);
+//  painter.setRenderHint(QPainter::Antialiasing, false);
   painter.setBrush(Qt::NoBrush);
   int x0 = m_valueAxisX;
   int x1 = width();
@@ -679,7 +679,7 @@ void FunctionPanel::drawOtherCurves(QPainter &painter) {
   }
   painter.setBrush(Qt::NoBrush);
   painter.setPen(m_textColor);
-  painter.setRenderHint(QPainter::Antialiasing, false);
+//  painter.setRenderHint(QPainter::Antialiasing, false);
 }
 
 //-----------------------------------------------------------------------------
@@ -894,7 +894,7 @@ void FunctionPanel::drawCurrentCurve(QPainter &painter) {
   if (!channel) return;
   TDoubleParam *curve = channel->getParam();
 
-  painter.setRenderHint(QPainter::Antialiasing, true);
+//  painter.setRenderHint(QPainter::Antialiasing, true);
   QColor color = Qt::red;
   QPen solidPen(color);
   QPen dashedPen(color);
@@ -953,7 +953,7 @@ void FunctionPanel::drawCurrentCurve(QPainter &painter) {
         m_gadgets[j].m_pos.x() == m_gadgets[j + 1].m_pos.x())
       painter.drawLine(m_gadgets[j].m_pos, m_gadgets[j + 1].m_pos);
 
-  painter.setRenderHint(QPainter::Antialiasing, false);
+//  painter.setRenderHint(QPainter::Antialiasing, false);
   for (int j = 0; j < (int)m_gadgets.size(); j++) {
     const Gadget &g = m_gadgets[j];
     int i           = g.m_kIndex;
@@ -1001,7 +1001,7 @@ void FunctionPanel::drawCurrentCurve(QPainter &painter) {
     }
   }
 
-  painter.setRenderHint(QPainter::Antialiasing, false);
+//  painter.setRenderHint(QPainter::Antialiasing, false);
 }
 
 //-----------------------------------------------------------------------------

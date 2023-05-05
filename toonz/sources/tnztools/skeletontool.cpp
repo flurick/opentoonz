@@ -1310,8 +1310,8 @@ void SkeletonTool::drawDrawingBrowser(const TXshCell &cell,
     QImage img(totalSize.width(), totalSize.height(), QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     QPainter imgPainter(&img);
-    imgPainter.setRenderHints(QPainter::Antialiasing |
-                              QPainter::TextAntialiasing);
+//    imgPainter.setRenderHints(QPainter::Antialiasing |
+//                              QPainter::TextAntialiasing);
 
     // imgPainter.setPen(Qt::black);
     // imgPainter.drawRect(0,0,totalSize.width(),totalSize.height());

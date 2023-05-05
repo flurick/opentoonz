@@ -203,7 +203,7 @@ void BluredBrush::addPoint(const TThickPoint &p, double opacity) {
   double scaleFactor = radius / brushRadius;
 
   QPainter painter(&m_rasImage);
-  painter.setRenderHint(QPainter::Antialiasing);
+//  painter.setRenderHint(QPainter::Antialiasing);
   painter.setPen(Qt::NoPen);
   painter.setBrush(m_gradient);
   painter.setTransform(QTransform(scaleFactor, 0.0, 0.0, scaleFactor,
@@ -223,7 +223,7 @@ void BluredBrush::addArc(const TThickPoint &pa, const TThickPoint &pb,
                          const TThickPoint &pc, double opacityA,
                          double opacityC) {
   QPainter painter(&m_rasImage);
-  painter.setRenderHint(QPainter::Antialiasing);
+//  painter.setRenderHint(QPainter::Antialiasing);
   painter.setPen(Qt::NoPen);
   // painter.setBrush(m_gradient);
 

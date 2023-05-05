@@ -116,7 +116,7 @@ void CameraCaptureLevelHistogram::paintEvent(QPaintEvent* event) {
     }
   }
 
-  p.setRenderHint(QPainter::Antialiasing);
+//  p.setRenderHint(QPainter::Antialiasing);
   // draw slider handles
   QPoint sliderBasePos(SIDE_MARGIN, HISTOGRAM_HEIGHT + 2);
   if (m_mode == Color_GrayScale) {
@@ -134,7 +134,7 @@ void CameraCaptureLevelHistogram::paintEvent(QPaintEvent* event) {
     // threshold
     drawSliderHandle(sliderBasePos + QPoint(m_threshold, 0), p, Qt::gray,
                      m_currentItem == ThresholdSlider);
-  p.setRenderHint(QPainter::Antialiasing, false);
+//  p.setRenderHint(QPainter::Antialiasing, false);
 }
 
 //-----------------------------------------------------------------------------

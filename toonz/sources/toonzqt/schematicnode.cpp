@@ -650,7 +650,7 @@ void SchematicLink::paint(QPainter *painter,
   else
     painter->setPen(QPen(QColor(170, 170, 10), 0, Qt::DashLine));
 
-  painter->setRenderHint(QPainter::Antialiasing, true);
+//  painter->setRenderHint(QPainter::Antialiasing, true);
   painter->drawPath(m_path);
 }
 
@@ -1267,6 +1267,6 @@ void SnapTargetItem::paint(QPainter *painter,
 
   QPainterPath path(startPos);
   path.cubicTo(p0, p1, p2);
-  painter->setRenderHint(QPainter::Antialiasing, true);
+//  painter->setRenderHint(QPainter::Antialiasing, true);
   painter->drawPath(path);
 }

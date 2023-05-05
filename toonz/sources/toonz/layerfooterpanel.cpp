@@ -74,7 +74,7 @@ QLine rightSide(const QRect &r) { return QLine(r.topRight(), r.bottomRight()); }
 
 void LayerFooterPanel::paintEvent(QPaintEvent *event) {
   QPainter p(this);
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   const Orientation *o = m_viewer->orientation();
 
@@ -96,7 +96,7 @@ void LayerFooterPanel::paintEvent(QPaintEvent *event) {
       svgToPixmap(getIconThemePath("actions/15/zoom_out_rollover.svg")));
   const QRect zoomOutImgRect = o->rect(PredefinedRect::ZOOM_OUT);
 
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
   if (m_zoomInHighlighted)
     p.drawPixmap(zoomInImgRect, zoomInRollover);
   else

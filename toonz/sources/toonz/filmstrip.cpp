@@ -783,7 +783,7 @@ void FilmstripFrames::drawFrameIcon(QPainter &p, const QRect &r, int index,
         double ratio = std::min(1.0, txtRect.width() / bbox.width());
 
         p.save();
-        p.setRenderHint(QPainter::TextAntialiasing);
+//        p.setRenderHint(QPainter::TextAntialiasing);
         p.rotate(90.0);
         p.scale(ratio, 1.0);
         p.drawText(QRectF(txtRect.left() / ratio, txtRect.top(),

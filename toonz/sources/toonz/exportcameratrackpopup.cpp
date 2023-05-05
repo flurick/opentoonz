@@ -160,8 +160,8 @@ CameraTrackPreviewPane::CameraTrackPreviewPane(QWidget* parent)
 
 void CameraTrackPreviewPane::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
-  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-  painter.setRenderHint(QPainter::Antialiasing, true);
+//  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  painter.setRenderHint(QPainter::Antialiasing, true);
   QSize pmSize((double)m_pixmap.width() * m_scaleFactor,
                (double)m_pixmap.height() * m_scaleFactor);
   painter.drawPixmap(
@@ -686,7 +686,7 @@ QImage ExportCameraTrackPopup::generateCameraTrackImg(
   }
 
   QPainter p(&img);
-  p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+//  p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
   p.setBrush(QColor(255, 255, 255, 255. * (1. - info.bgOpacity)));
   p.setPen(Qt::NoPen);

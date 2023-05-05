@@ -51,7 +51,7 @@ QLine rightSide(const QRect &r) { return QLine(r.topRight(), r.bottomRight()); }
 
 void LayerHeaderPanel::paintEvent(QPaintEvent *event) {
   QPainter p(this);
-  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+//  p.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   const Orientation *o = Orientations::leftToRight();
 
