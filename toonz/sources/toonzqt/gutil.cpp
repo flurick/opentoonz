@@ -309,7 +309,7 @@ QIcon createQIcon(const char *iconSVGName, bool useFullOpacity,
                   bool isForMenuItem) {
   static int devPixRatio = getHighestDevicePixelRatio();
 
-  QIcon themeIcon = QIcon::fromTheme(iconSVGName);
+  QIcon themeIcon;// = QIcon::fromTheme(iconSVGName);
 
   // Get icon dimensions
   QSize iconSize(0, 0);
