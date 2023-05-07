@@ -615,6 +615,7 @@ void RowArea::drawOnionSkinSelection(QPainter &p) {
     handleTopLeft.setX(0);
   QRect handleRect =
       onionRect.translated(handleTopLeft).translated(-frameAdj / 2);
+  handleRect.adjust(4,4, -4,-4); //resize main handles rect down some pixels
   int angle180 = 16 * 180;
   int turn =
       m_viewer->orientation()->dimension(PredefinedDimension::ONION_TURN) * 16;
