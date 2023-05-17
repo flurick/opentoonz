@@ -1220,6 +1220,9 @@ void TCellSelection::decreaseStepCells() {
   m_range.m_c1 = col;
   TApp::instance()->getCurrentSelection()->notifySelectionChanged();
 
+  //scrub to first cell in new selection
+  TApp::instance()->getCurrentFrame()->scrubXsheet(row, row, xsh);
+
   DecreaseStepUndo *undo = new DecreaseStepUndo(m_range.m_r0, m_range.m_c0,
                                                 m_range.m_r1, m_range.m_c1);
   TUndoManager::manager()->add(undo);
