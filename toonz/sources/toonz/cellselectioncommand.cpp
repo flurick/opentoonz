@@ -1199,31 +1199,27 @@ void DecreaseStepUndo::undo() const {
 //=============================================================================
 
 void TCellSelection::decreaseStepCells() {
-  if (isEmpty()) {
-    int row = TTool::getApplication()->getCurrentFrame()->getFrame();
-    int col = TTool::getApplication()->getCurrentColumn()->getColumnIndex();
-    int r1  = row;
-    TXsheet *xsh = TApp::instance()->getCurrentXsheet()->getXsheet();
-    TXshCell cell;
-    TXshCell nextCell;
-    bool sameCells = true;
-    cell           = xsh->getCell(row, col);
-    if (cell.isEmpty()) return;
 
-    for (int i = 1; sameCells; i++) {
-      nextCell = xsh->getCell(row + i, col);
-      if (nextCell.m_frameId == cell.m_frameId &&
-          nextCell.m_level == cell.m_level) {
-        r1 = row + i;
-      } else
-        sameCells = false;
-    }
-    m_range.m_r0 = row;
-    m_range.m_r1 = r1;
-    m_range.m_c0 = col;
-    m_range.m_c1 = col;
-    TApp::instance()->getCurrentSelection()->notifySelectionChanged();
-  }
+  int row = TTool::getApplication()->getCurrentFrame()->getFrame();
+  int col = TTool::getApplication()->getCurrentColumn()->getColumnIndex();
+  int r1  = row;
+  TXsheet *xsh = TApp::instance()->getCurrentXsheet()->getXsheet();
+  TXshCell cell;
+  TXshCell nextCell;
+  bool sameCells = true;
+  cell           = xsh->getCell(row, col);
+  if (cell.isEmpty()) return;
+
+  //expand selection to neighboring duplicates
+  while (xsh->getCell(row-1, col) == cell) row--; //to the left/up
+  while (xsh->getCell(r1+1, col) == cell) r1++; //and to the right/down
+
+  m_range.m_r0 = row;
+  m_range.m_r1 = r1;
+  m_range.m_c0 = col;
+  m_range.m_c1 = col;
+  TApp::instance()->getCurrentSelection()->notifySelectionChanged();
+
   DecreaseStepUndo *undo = new DecreaseStepUndo(m_range.m_r0, m_range.m_c0,
                                                 m_range.m_r1, m_range.m_c1);
   TUndoManager::manager()->add(undo);
