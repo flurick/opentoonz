@@ -1205,9 +1205,7 @@ void TCellSelection::decreaseStepCells() {
   int r1  = row;
   TXsheet *xsh = TApp::instance()->getCurrentXsheet()->getXsheet();
   TXshCell cell;
-  TXshCell nextCell;
-  bool sameCells = true;
-  cell           = xsh->getCell(row, col);
+  cell = xsh->getCell(row, col);
   if (cell.isEmpty()) return;
 
   //expand selection to neighboring duplicates
