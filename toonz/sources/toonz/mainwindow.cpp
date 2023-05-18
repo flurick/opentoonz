@@ -2410,6 +2410,8 @@ void MainWindow::defineActions() {
                              "");
   createRightClickMenuAction(MI_ToggleColumnsActivation,
                              QT_TR_NOOP("Toggle Show/Hide"), "");
+  createRightClickMenuAction(MI_ToggleSelectedColumnsActivation,
+                             QT_TR_NOOP("Toggle Selected Show/Hide"), "");
   createRightClickMenuAction(MI_EnableThisColumnOnly,
                              QT_TR_NOOP("ON This Only"), "");
   createRightClickMenuAction(MI_EnableSelectedColumns,

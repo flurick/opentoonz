@@ -2896,6 +2896,7 @@ void ColumnArea::contextMenuEvent(QContextMenuEvent *event) {
     menu.addAction(cmdManager->getAction("MI_DeactivateAllColumns"));
     menu.addAction(cmdManager->getAction("MI_DeactivateSelectedColumns"));
     menu.addAction(cmdManager->getAction("MI_ToggleColumnsActivation"));
+    menu.addAction(cmdManager->getAction("MI_ToggleSelectedColumnsActivation"));
     // hide all columns placed on the left
     menu.addAction(cmdManager->getAction("MI_DeactivateUpperColumns"));
   }

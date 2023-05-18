@@ -1530,6 +1530,7 @@ ColumnsStatusCommand
     c01(MI_DeactivateAllColumns, CMD_DISABLE_CAMSTAND, TARGET_ALL),
     c02(MI_ActivateThisColumnOnly, CMD_ENABLE_CAMSTAND, TARGET_CURRENT),
     c03(MI_ToggleColumnsActivation, CMD_TOGGLE_CAMSTAND, TARGET_ALL),
+    c30(MI_ToggleSelectedColumnsActivation, CMD_TOGGLE_CAMSTAND, TARGET_SELECTED),
     c04(MI_ActivateSelectedColumns, CMD_ENABLE_CAMSTAND, TARGET_SELECTED),
     c05(MI_DeactivateSelectedColumns, CMD_DISABLE_CAMSTAND, TARGET_SELECTED),
     c18(MI_DeactivateUpperColumns, CMD_DISABLE_CAMSTAND, TARGET_UPPER),

@@ -298,6 +298,7 @@
 #define MI_ActivateAllColumns "MI_ActivateAllColumns"
 #define MI_DeactivateSelectedColumns "MI_DeactivateSelectedColumns"
 #define MI_DeactivateAllColumns "MI_DeactivateAllColumns"
+#define MI_ToggleSelectedColumnsActivation "MI_ToggleSelectedColumnsActivation"
 #define MI_ToggleColumnsActivation "MI_ToggleColumnsActivation"
 #define MI_EnableThisColumnOnly "MI_EnableThisColumnOnly"
 #define MI_EnableSelectedColumns "MI_EnableSelectedColumns"
