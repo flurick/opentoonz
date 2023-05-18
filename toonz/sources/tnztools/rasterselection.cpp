@@ -1059,7 +1059,7 @@ void RasterSelection::pasteFloatingSelection() {
                            m_currentImageCell.getFrameId());
 
   setFloatingSeletion(TRasterP());
-  selectNone();
+//  selectNone();
 
   TTool *tool = TTool::getApplication()->getCurrentTool()->getTool();
   tool->notifyImageChanged(m_fid);
