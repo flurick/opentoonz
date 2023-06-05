@@ -496,7 +496,7 @@ TPanelTitleBar::TPanelTitleBar(QWidget *parent,
 //-----------------------------------------------------------------------------
 
 QSize TPanelTitleBar::minimumSizeHint() const {
-  return QSize(20, this->fontMetrics().leading() + this->fontMetrics().height() + this->fontMetrics().leading()  );
+  return QSize(0, this->fontMetrics().leading() + this->fontMetrics().height() + this->fontMetrics().leading()  );
 }
 
 //-----------------------------------------------------------------------------
@@ -525,11 +525,11 @@ void TPanelTitleBar::paintEvent(QPaintEvent *) {
 
   if (dw->getOrientation() == TDockWidget::vertical) {
     QString titleText = painter.fontMetrics().elidedText(
-        dw->windowTitle(), Qt::ElideRight, rect.width() - 50);
+        dw->windowTitle(), Qt::ElideRight, rect.width());
 
     painter.setBrush(Qt::NoBrush);
     painter.setPen(isPanelActive ? m_activeTitleColor : m_titleColor);
-    painter.drawText(QPointF(8, painter.fontMetrics().ascent()), titleText);
+    painter.drawText(rect, titleText);
   }
 
   if (dw->isFloating()) {
