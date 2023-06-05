@@ -495,7 +495,9 @@ TPanelTitleBar::TPanelTitleBar(QWidget *parent,
 
 //-----------------------------------------------------------------------------
 
-QSize TPanelTitleBar::minimumSizeHint() const { return QSize(20, 18); }
+QSize TPanelTitleBar::minimumSizeHint() const {
+  return QSize(20, this->fontMetrics().leading() + this->fontMetrics().height() + this->fontMetrics().leading()  );
+}
 
 //-----------------------------------------------------------------------------
 
@@ -527,7 +529,7 @@ void TPanelTitleBar::paintEvent(QPaintEvent *) {
 
     painter.setBrush(Qt::NoBrush);
     painter.setPen(isPanelActive ? m_activeTitleColor : m_titleColor);
-    painter.drawText(QPointF(8, 13), titleText);
+    painter.drawText(QPointF(8, painter.fontMetrics().ascent()), titleText);
   }
 
   if (dw->isFloating()) {
