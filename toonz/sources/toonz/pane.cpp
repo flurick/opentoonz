@@ -529,7 +529,7 @@ void TPanelTitleBar::paintEvent(QPaintEvent *) {
 
     painter.setBrush(Qt::NoBrush);
     painter.setPen(isPanelActive ? m_activeTitleColor : m_titleColor);
-    painter.drawText(rect, titleText);
+    painter.drawText(this->contentsRect(), titleText);
   }
 
   if (dw->isFloating()) {
