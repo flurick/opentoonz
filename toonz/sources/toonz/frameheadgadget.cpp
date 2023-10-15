@@ -30,6 +30,11 @@ void enableOnionSkin(bool enable = true) {
   TOnionSkinMaskHandle *osmh = TApp::instance()->getCurrentOnionSkin();
   OnionSkinMask osm          = osmh->getOnionSkinMask();
 
+  if (osm.isEmpty()) {
+    osm.setMos(-1, true);
+    osm.setMos(-2, true);
+    osm.setMos(-3, true);
+  }
   osm.enable(enable);
   osmh->setOnionSkinMask(osm);
   osmh->notifyOnionSkinMaskChanged();
