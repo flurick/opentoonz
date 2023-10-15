@@ -753,7 +753,7 @@ public:
         // Se e' una colonna sound l'extender non deve fare nulla.
         TXshColumn *column = xsh->getColumn(m_c0 + c);
         if (column && column->getSoundColumn()) continue;
-        if (m_insert) xsh->insertCells(m_r1 + 1, m_c0 + c, dr);
+//        if (m_insert) xsh->insertCells(m_r1 + 1, m_c0 + c, dr);
         for (int r = m_r1 + 1; r <= r1; r++)
           xsh->setCell(r, m_c0 + c, m_columns[c].generate(r));
       }
@@ -790,7 +790,7 @@ public:
     }
 
     // upper-directional tab can extend cells only in the mpty area
-    if (r0 < emptyRow) r0 = emptyRow;
+//    if (r0 < emptyRow) r0 = emptyRow;
 
     int dr = r0 - m_r0;
     if (dr == 0) return;
