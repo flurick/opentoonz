@@ -956,9 +956,7 @@ class OnionSkinToggle final : public MenuItemHandler {
 public:
   OnionSkinToggle() : MenuItemHandler(MI_OnionSkin) {}
   void execute() override {
-    QAction *action = CommandManager::instance()->getAction(MI_OnionSkin);
-    if (!action) return;
-    bool checked = action->isChecked();
-    enableOnionSkin(checked);
+    TOnionSkinMaskHandle *osmh = TApp::instance()->getCurrentOnionSkin();
+    enableOnionSkin( !osmh->getOnionSkinMask().isEnabled() );
   }
 } onionSkinToggle;
