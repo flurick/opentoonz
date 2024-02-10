@@ -19,8 +19,7 @@ Building OpenToonz from source requires the following dependencies:
 ### Installing Dependencies on Debian / Ubuntu
 
 ```
-$sudo apt-get install build-essential git cmake pkg-config libboost-all-dev qt5-default qtbase5-dev libqt5svg5-dev qtscript5-dev qttools5-dev qttools5-dev-tools libqt5opengl5-dev qtmultimedia5-dev libqt5multimedia5-plugins libqt5serialport5-dev libsuperlu-dev 
-liblz4-dev libusb-1.0-0-dev liblzo2-dev libpng-dev libjpeg-dev libglew-dev freeglut3-dev libfreetype6-dev libjson-c-dev qtwayland5 libmypaint-dev libopencv-dev libturbojpeg-dev
+$sudo apt install build-essential git cmake pkg-config libboost-all-dev qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libqt5svg5-dev qtscript5-dev qttools5-dev qttools5-dev-tools libqt5opengl5-dev qtmultimedia5-dev libqt5multimedia5-plugins libqt5serialport5-dev libsuperlu-dev liblz4-dev libusb-1.0-0-dev liblzo2-dev libpng-dev libjpeg-dev libglew-dev freeglut3-dev libfreetype6-dev libjson-c-dev qtwayland5 libmypaint-dev libopencv-dev libturbojpeg-dev
 ```
 
 For newest versions of OS you may install libmypaint from repository and don't need to build it from source:
@@ -65,7 +64,7 @@ Notes:
 ### Installing Dependencies on openSUSE
 
 ```
-$ zypper in boost-devel cmake freeglut-devel freetype2-devel gcc-c++ glew-devel libQt5OpenGL-devel libjpeg-devel liblz4-devel libpng16-compat-devel libqt5-linguist-devel libqt5-qtbase-devel libqt5-qtmultimedia-devel libqt5-qtscript-devel libqt5-qtsvg-devel libtiff-devel libusb-devel lzo-devel openblas-devel pkgconfig sed superlu-devel zlib-devel json-c-devel libqt5-qtmultimedia
+$ zypper in boost-devel cmake freeglut-devel freetype2-devel gcc-c++ glew-devel libQt5OpenGL-devel libjpeg-devel liblz4-devel libpng16-compat-devel libqt5-linguist-devel libqt5-qtbase-devel libqt5-qtmultimedia-devel libqt5-qtscript-devel libqt5-qtsvg-devel libtiff-devel libusb-devel lzo-devel openblas-devel pkgconfig sed superlu-devel zlib-devel json-c-devel libqt5-qtmultimedia qtbase5-dev qt5-qmake
 ```
 
 For newest versions of OS you may install libmypaint from repository and don't need to build it from source:
